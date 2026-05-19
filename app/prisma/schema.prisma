@@ -22,6 +22,7 @@ upvote Upvote[]
 }
 
 model  Stream{
+id  String @id @default(uuid())
 type StreamType
 active Boolean  @default(true)
 upvotes Int
@@ -35,8 +36,8 @@ id String   @id  @default(uuid())
 userId  String
 streamId String
 user User @relation(fields: [userId], references: [id])
-stream Stream  @relation(fields: [userId], references: [id])
-@@uniqu([userId, streamId])
+stream Stream  @relation(fields: [streamId], references: [id])
+@@unique([userId, streamId])
 }
 
 enum StreamType{
