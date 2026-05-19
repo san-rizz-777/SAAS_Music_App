@@ -1,7 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
 import {prismaClient} from "@/app/lib/db";
 import {z} from "zod"
-import {getSession} from "next-auth/react";
 import {getServerSession} from "next-auth";
 
 const UpvoteSchema = z.object({
@@ -15,9 +14,9 @@ export async function POST(req:NextRequest)
     ///TODO :- can get the rid of the db call here
     //to authenticate the user
     const user = await prismaClient.user.findFirst({
-where:{
-    email: session?.user?.email ?? ""
-}
+        where:{
+            email: session?.user?.email ?? ""
+        }
     });
 
     //error handling
@@ -31,21 +30,23 @@ where:{
     }
 
 ////try-catch error handling
-try{
-    const data = UpvoteSchema.parse(await req.json());
-    await prismaClient.upvote.create({
-        data:{
-            userId: user.id,
-            streamId: data.streamId
-        }
-    });
-}
-catch(e){
-    return NextResponse.json({
-        message: "Error while upvoting!!!"
-    },
-        {
-            status:411
+    try{
+        const data = UpvoteSchema.parse(await req.json());
+        await prismaClient.upvote.delete({
+            where:{
+                userId_streamId: {
+                    userId: user.id,
+                    streamId: data.streamId
+                }
+            }
         });
-}
     }
+    catch(e){
+        return NextResponse.json({
+                message: "Error while downvoting!!!"
+            },
+            {
+                status:411
+            });
+    }
+}
