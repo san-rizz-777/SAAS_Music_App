@@ -14,7 +14,7 @@ datasource db {
 
 model User{
 id         String @id @default(uuid())
-email      String
+email      String      @unique
 provider   Provider
 role       Role
 stream     Stream[]        //every user has bunch of streams
