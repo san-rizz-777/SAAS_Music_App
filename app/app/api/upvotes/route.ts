@@ -1,7 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
 import {prismaClient} from "@/app/lib/db";
-import {z} from "zod"
-import {getSession} from "next-auth/react";
+import {z} from "zod";
 import {getServerSession} from "next-auth";
 
 const UpvoteSchema = z.object({
