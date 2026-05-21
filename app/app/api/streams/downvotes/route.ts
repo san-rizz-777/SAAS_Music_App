@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
-import {prismaClient} from "@/app/lib/db";
+import prisma from "@/app/lib/db";
 import {z} from "zod"
 import {getServerSession} from "next-auth";
 
@@ -11,9 +11,9 @@ export async function POST(req:NextRequest)
 {
     const session = await getServerSession();
 
-    ///TODO :- can get the rid of the db call here
+    ///TODO :- can get the rid of the prisma call here
     //to authenticate the user
-    const user = await prismaClient.user.findFirst({
+    const user = await prisma.user.findFirst({
         where:{
             email: session?.user?.email ?? ""
         }
@@ -32,7 +32,7 @@ export async function POST(req:NextRequest)
 ////try-catch error handling
     try{
         const data = UpvoteSchema.parse(await req.json());
-        await prismaClient.upvote.delete({
+        await prisma.upvote.delete({
             where:{
                 userId_streamId: {
                     userId: user.id,
