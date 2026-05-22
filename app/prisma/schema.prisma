@@ -13,46 +13,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-id         String @id @default(uuid())
-email      String    @unique
-provider   Provider
-role       Role
-stream     Stream[]        //every user has bunch of streams
-upvote     Upvote[]
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  provider Provider
+  role     Role
+  stream   Stream[] //every user has bunch of streams
+  upvote   Upvote[]
 }
 
-model  Stream{
-id            String @id @default(uuid())
-type          StreamType
-url           String
-extractedId   String
-active        Boolean  @default(true)
-userId        String
-user          User      @relation(fields: [userId], references: [id])
-upvotes       Upvote[]
+model Stream {
+  id          String     @id @default(uuid())
+  type        StreamType
+  url         String
+  extractedId String
+  title_      String     @default("")
+  smallImg    String     @default("")
+  bigImg      String     @default("")
+  active      Boolean    @default(true)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  upvotes     Upvote[]
 }
 
-model Upvote{
-id        String   @id  @default(uuid())
-userId    String
-streamId  String
-user      User @relation(fields: [userId], references: [id])
-stream    Stream  @relation(fields: [streamId], references: [id])
-@@unique([userId, streamId])
+model Upvote {
+  id       String @id @default(uuid())
+  userId   String
+  streamId String
+  user     User   @relation(fields: [userId], references: [id])
+  stream   Stream @relation(fields: [streamId], references: [id])
+
+  @@unique([userId, streamId])
 }
 
-enum StreamType{
-Spotify
-Youtube
+enum StreamType {
+  Spotify
+  Youtube
 }
 
-enum Provider{
-Google
+enum Provider {
+  Google
 }
 
-enum Role{
-Streamer
-EndUser
+enum Role {
+  Streamer
+  EndUser
 }
-

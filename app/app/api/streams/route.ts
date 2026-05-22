@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from "next/server";
 import  {z} from "zod";
 import prisma from "@/app/lib/db";
+import youtubesearchapi from "youtube-search-api";
 
 const YT_REG = new RegExp("^(?:https?:\\/\\/)?(?:www\\.)?(?:m\\.)?(?:youtube\\.com\\/(?:watch\\?(?!.*\\blist=)(?:.*&)?v=|embed\\/|v\\/)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})(?:[?&]\\S+)?$");
 
@@ -29,6 +30,12 @@ export async function POST(req: NextRequest) {
         //extract the id
         const extractedId = data.url.split("?v=")[1];
 
+        const res = await youtubesearchapi.GetVideoDetails(extractedId);
+
+        //extract the biggest thumbnail and title
+        const thumbnails = res.thumbnail.thumbnails;
+        thumbnails.sort((a:{width:number},b:{width:number}) => a.width < b.width ? -1 : 1);   ///sorting in ascending
+
         //create the stream
         // @ts-ignore
        const stream =  await prisma.stream.create({
@@ -36,7 +43,10 @@ export async function POST(req: NextRequest) {
                 userId: data.creatorId,
                 url: data.url,
                 extractedId,
-                type: "Youtube"
+                type: "Youtube",
+                title_: res.title ?? "Can't find the video!!!",
+                smallImg: (thumbnails.length > 1 ? thumbnails.at(-2).url : thumbnails.at(-1).url) ?? "https://www.shutterstock.com/image-vector/old-computer-browser-90s-404-260nw-2664184569.jpg",
+                bigImg: thumbnails.at(-1).url ?? "https://www.shutterstock.com/image-vector/old-computer-browser-90s-404-260nw-2664184569.jpg"
             }
         })
 
@@ -47,14 +57,13 @@ export async function POST(req: NextRequest) {
         })
     }
     catch(e){
+        console.log(e);
         return NextResponse.json({
             message: "Error while adding a stream!!!"
         }, {
             status: 411
         })
     }
-
-    return
 }
 
 
