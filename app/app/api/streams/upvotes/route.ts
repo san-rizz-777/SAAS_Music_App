@@ -38,13 +38,19 @@ try{
             streamId: data.streamId
         }
     });
+
+//upvoted
+return NextResponse.json({
+    message: "Upvoted Successfully!!!",
+});
+
 }
 catch(e){
     return NextResponse.json({
         message: "Error while upvoting!!!"
     },
         {
-            status:411
+            status:403,
         });
 }
     }
