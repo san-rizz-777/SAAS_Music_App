@@ -81,7 +81,7 @@ export default function SigninCard({ setFormType: setState }: SigninCardProps) {
         <Card className="h-full w-full border-purple-600 bg-gray-800 bg-opacity-50 p-8">
             <CardHeader className="w-full">
                 <CardTitle className="text-center text-3xl font-bold text-white">
-                    Login to Muzer
+                    Login to Nachklang
                 </CardTitle>
             </CardHeader>
             {!!error && (
