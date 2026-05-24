@@ -19,7 +19,7 @@ export function Appbar({ showThemeSwitch = true , isSpectator=false }) {
                 }}
                 className={`flex flex-col justify-center text-lg font-bold hover:cursor-pointer ${showThemeSwitch ? "" : "text-white"}`}
             >
-                Muzer
+                NachKlang
             </div>
             <div className="flex items-center gap-x-2">
                 {isSpectator && <WalletMultiButton/>}
