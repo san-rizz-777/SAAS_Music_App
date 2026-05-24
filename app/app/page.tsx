@@ -6,7 +6,7 @@ import { Users, Radio, Headphones } from "lucide-react";
 import { Appbar } from "@/components/Appbar";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/lib/auth-options";
+import { authOptions } from "@/app/lib/next-options";
 
 export default async function LandingPage() {
     const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export default async function LandingPage() {
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
             <Appbar showThemeSwitch={false} />
             <main className="flex-1 py-12 md:py-24 lg:py-32">
-                <div className="container px-4 md:px-6">
+                <div className="container mx-auto px-4 md:px-6">
                     <div className="flex flex-col items-center space-y-4 text-center">
                         <div className="space-y-2">
                             <h1 className="text-3xl font-bold tracking-tighter text-white sm:text-4xl md:text-5xl lg:text-6xl/none">
@@ -46,7 +46,7 @@ export default async function LandingPage() {
                 </div>
             </main>
             <section className="w-full bg-gray-800 bg-opacity-50 py-12 md:py-24 lg:py-32">
-                <div className="container px-4 md:px-6">
+                <div className="container mx-auto px-4 md:px-6">
                     <h2 className="mb-8 text-center text-2xl font-bold tracking-tighter text-white sm:text-3xl">
                         Key Features
                     </h2>
@@ -72,7 +72,7 @@ export default async function LandingPage() {
                 </div>
             </section>
             <section className="w-full py-12 md:py-24 lg:py-32">
-                <div className="container px-4 md:px-6">
+                <div className="container mx-auto px-4 md:px-6">
                     <div className="flex flex-col items-center space-y-4 text-center">
                         <div className="space-y-2">
                             <h2 className="text-3xl font-bold tracking-tighter text-white sm:text-4xl">
@@ -113,7 +113,7 @@ export default async function LandingPage() {
             </section>
             <footer className="flex w-full shrink-0 flex-col items-center gap-2 border-t border-gray-700 px-4 py-6 sm:flex-row md:px-6">
                 <p className="text-xs text-gray-400">
-                    © 2023 MusicStreamChoice. All rights reserved.
+                    © 2026 MusicStreamChoice_lol_. All rights reserved.
                 </p>
                 <nav className="flex gap-4 sm:ml-auto sm:gap-6">
                     <Link

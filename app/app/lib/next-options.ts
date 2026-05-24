@@ -7,8 +7,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaClientInitializationError } from "@prisma/client/runtime/library";
 import {emailSchema, passSchema} from "@/schema/crendentials-schema";
 import prisma from "@/app/lib/db";
-import {email} from "zod";
-import {error} from "next/dist/build/output/log";
+
 
 export const authOptions: NextAuthOptions = {
     providers:[
