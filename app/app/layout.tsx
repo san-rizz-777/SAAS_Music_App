@@ -12,7 +12,7 @@ type ToasterProps = React.ComponentProps<typeof Toaster>;
 const toastOptions: ToasterProps = {
   theme: "dark",
   richColors: true,
-  closeButton: true,    
+  closeButton: true,
   pauseWhenPageIsHidden: true,
 };
 
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
       process.env.NEXTAUTH_URL || "https://muzer.100xdevs.com/",
   ),
   keywords:
-      "music stream, fan interaction, live streaming, high-quality audio, curate music, Muzer",
-  title: "Muzer | Fan-Curated Live Music Streaming",
+      "music stream, fan interaction, live streaming, high-quality audio, curate music, klang, echo, sound",
+  title: "NachKlang | Fan-Curated Live Music Streaming",
   description:
       "Live fan-curated music streaming. High-quality audio, real-time engagement.",
   openGraph: {
