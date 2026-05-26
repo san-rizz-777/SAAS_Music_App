@@ -12,7 +12,7 @@ type ToasterProps = React.ComponentProps<typeof Toaster>;
 const toastOptions: ToasterProps = {
   theme: "dark",
   richColors: true,
-  closeButton: true,
+  closeButton: true,    
   pauseWhenPageIsHidden: true,
 };
 
