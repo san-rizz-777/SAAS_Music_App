@@ -14,28 +14,46 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(uuid())
-  email    String   @unique
-  password String?
-  name     String?
-  provider Provider
-  role     Role
-  stream   Stream[] //every user has bunch of streams
-  upvote   Upvote[]
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String?
+  name         String?
+  provider     Provider
+  role         Role
+  stream       Stream[] //every user has bunch of streams
+  upvote       Upvote[]
+  addedStreams Stream[] @relation("addedBy")
+  hostedSpaces Space[]  @relation("hostedBy")
 }
 
 model Stream {
-  id          String     @id @default(uuid())
-  type        StreamType
-  url         String
-  extractedId String
-  title_      String     @default("")
-  smallImg    String     @default("")
-  bigImg      String     @default("")
-  active      Boolean    @default(true)
-  userId      String
-  user        User       @relation(fields: [userId], references: [id])
-  upvotes     Upvote[]
+  id            String         @id @default(uuid())
+  type          StreamType
+  url           String
+  extractedId   String
+  title_        String         @default("")
+  smallImg      String         @default("")
+  bigImg        String         @default("")
+  active        Boolean        @default(true)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  upvotes       Upvote[]
+  played        Boolean
+  playedTs      DateTime?
+  addedBy       String
+  addedByUser   User           @relation("addedBy", fields: [addedBy], references: [id])
+  spaceId       String?
+  space         Space?         @relation("spaceStreams", fields: [spaceId], references: [id], onDelete: Cascade)
+  currentStream CurrentStream?
+}
+
+model CurrentStream {
+  id       String  @id @default(uuid())
+  userId   String
+  streamId String? @unique
+  stream   Stream? @relation(fields: [streamId], references: [id])
+  spaceId  String? @unique
+  space    Space?  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 }
 
 model Upvote {
@@ -46,6 +64,16 @@ model Upvote {
   stream   Stream @relation(fields: [streamId], references: [id])
 
   @@unique([userId, streamId])
+}
+
+model Space {
+  id            String         @id @default(uuid())
+  name          String
+  streams       Stream[]       @relation("spaceStreams")
+  hostId        String
+  host          User           @relation("hostedBy", fields: [hostId], references: [id])
+  isActive      Boolean        @default(true)
+  currentStream CurrentStream?
 }
 
 enum StreamType {
