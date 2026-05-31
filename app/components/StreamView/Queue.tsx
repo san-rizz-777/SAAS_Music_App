@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Play, Share2, Trash2, X } from "lucide-react";
-import { useSocket } from "@/app/context/socket-context";
+import { useSocket } from "@/context/socket-context";
 import { toast } from "sonner";
 import Image from "next/image";
 import {

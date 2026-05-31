@@ -10,5 +10,4 @@ export default async function Home(){
         return <h1>Please Log in....</h1>;
     }
     return <HomeView></HomeView>
-
 }

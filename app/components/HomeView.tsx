@@ -26,7 +26,7 @@ export default function HomeView() {
     const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
     const [spaceName, setSpaceName] = useState("");
     const [spaces, setSpaces] = useState<Space[] | null>(null);
-    const [loading, setIsLoading] = useState(false);
+    const [loading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchSpaces = async () => {
@@ -41,7 +41,7 @@ export default function HomeView() {
                 if (!response.ok || !data.success) {
                     throw new Error(data.message || "Failed to fetch spaces");
                 }
-
+                console.log("API response:", data);
                 const fetchedSpaces: Space[] = data.spaces;
                 setSpaces(fetchedSpaces);
             } catch (error) {
@@ -127,7 +127,14 @@ export default function HomeView() {
                 />
             ));
         }
-    }, [loading, spaces, handleDeleteSpace]);
+
+        //handling the empty state
+        return <div className="flex flex-grow flex-col items-center justify-center  align-middle px-4 py-8">
+            <p className="bg-gradient-to-r from-indigo-600 to-violet-900 bg-clip-text text-2xl font-bold text-transparent">
+                No spaces yet. Create one!
+            </p>
+        </div>
+        }, [loading, spaces, handleDeleteSpace]);
 
     return (
         <div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-900 to-black text-gray-200">
@@ -145,7 +152,7 @@ export default function HomeView() {
                     Create a new Space
                 </Button>
 
-                <div className="mt-20 grid grid-cols-1 gap-8 p-4 md:grid-cols-2">
+                <div className="mt-20        grid-cols-1 gap-8 p-4 md:grid-cols-2">
                     {renderSpaces}
                 </div>
             </div>

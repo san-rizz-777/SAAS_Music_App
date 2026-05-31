@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 
-import { useSocket } from "@/app/context/socket-context";
+import { useSocket } from "@/context/socket-context";
 import { useSession } from "next-auth/react";
 import NowPlaying from "./NowPlaying";
 import Queue from "./Queue";

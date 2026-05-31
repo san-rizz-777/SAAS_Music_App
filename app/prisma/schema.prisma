@@ -19,8 +19,7 @@ model User {
   password     String?
   name         String?
   provider     Provider
-  role         Role
-  stream       Stream[] //every user has bunch of streams
+  stream       Stream[] // every user has bunch of streams
   upvote       Upvote[]
   addedStreams Stream[] @relation("addedBy")
   hostedSpaces Space[]  @relation("hostedBy")
@@ -84,9 +83,4 @@ enum StreamType {
 enum Provider {
   Google
   Credentials
-}
-
-enum Role {
-  Streamer
-  EndUser
 }

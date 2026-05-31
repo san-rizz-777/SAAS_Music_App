@@ -19,7 +19,6 @@ GoogleProvider({
                         data: {
                             email: params.user.email ?? "",
                             provider: "Google",
-                            role: "Streamer"
                         }
                     })
                 }

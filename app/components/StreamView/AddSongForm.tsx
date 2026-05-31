@@ -1,5 +1,5 @@
 import { YT_REGEX } from "@/app/lib/utils";
-import { useSocket } from "@/app/context/socket-context";
+import { useSocket } from "@/context/socket-context";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

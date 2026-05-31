@@ -1,17 +1,20 @@
-"use-client"
+"use client"
 
 import {useEffect, useState} from "react";
-import {useSocket} from "@/app/context/socket-context";
+import {useSocket} from "@/context/socket-context";
 import jwt from "jsonwebtoken"
 import StreamView from "@/components/StreamView";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
-import {useRouter} from "next/router";
+import {useRouter} from "next/navigation";
+import { use } from "react";
 
 // Default styles that can be overridden by the app
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-export default function Component({params: {spaceid}}: {params:{spaceid:string}}) {
+export default function Component({params}: {params:Promise<{spaceid:string}>}) {
+
+    const { spaceid } = use(params);  // unwrap the promise
 
     ///get the user and socket from custom hook
     const {socket, user, setUser, loading, connectionError} = useSocket();
@@ -21,28 +24,31 @@ export default function Component({params: {spaceid}}: {params:{spaceid:string}}
     const router = useRouter();
 
     useEffect(() => {
-        try {
+
             async function fetchCreatorId() {
-                //get the user data at that spaces url
-                const response = await fetch(`/api/spaces/?${spaceid}`, {
-                    method: "GET",
-                });
+                try {
+                    //get the user data at that spaces url
+                    const response = await fetch(`/api/spaces?spaceId=${spaceid}`, {
+                        method: "GET",
+                    });
 
-                const data = await response.json();
+                    const data = await response.json();
 
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || "Failed to fetch space host's ID.");
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || "Failed to fetch space host's ID.");
+                    }
+
+                    setCreatorId(data.hostId);
                 }
-
-                setCreatorId(data.hostId);
-            }
-        }
-        catch(error) {
+    catch(error) {
             console.log(error);
-            }
-            finally {
-            setLoading1(false);
-            }
+        }
+    finally {
+                    setLoading1(false);
+                }
+        }
+        fetchCreatorId();
+           ///called it here
     }, [spaceid]) ;  //whenever the spaces id changes
 
 

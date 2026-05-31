@@ -94,7 +94,7 @@ export default function SpacesCard({
                         variant="outline"
                         size="lg"
                         className="w-full rounded-lg border-purple-600 bg-purple-700 text-white shadow-md transition-colors duration-300 hover:bg-purple-600 hover:shadow-purple-600/50 md:w-auto"
-                        onClick={() => router.push(`/dashboard/${space.id}`)}
+                        onClick={() => router.push(`/spaces/${space.id}`)}
                     >
                         <ArrowRight className="mr-2 h-5 w-5" />
                         View Space
