@@ -28,32 +28,41 @@ export const SocketContextProvider = ({ children }: PropsWithChildren) => {
     ///create a instance of session
     const session = useSession();
 
+    //debugging
     useEffect(() => {
-        if(session && session.data?.user.id){
-const ws = new WebSocket(process.env.NEXT_PUBLIC_WSS_URL as string);
+        console.log("Full session data:", JSON.stringify(session.data));
+    }, [session.data]);
 
-///open function
-ws.onopen = () => {
-    setSocket(ws);
-    setUser(session.data?.user || null);
-    setLoading(false);
-};
+    useEffect(() => {
 
-//close function
-ws.onclose = () => {
-    setSocket(null);
-    setLoading(false);
-};
+        if (session.status === "loading") return; // still resolving
 
-//when error happened
-ws.onerror = () => {
-    setConnectionError(true);
-    setSocket(null);
-    setLoading(false);
-};
+        if (session.status === "authenticated" && (session.data?.user as any)?.id) {
+            const ws = new WebSocket(process.env.NEXT_PUBLIC_WSS_URL as string);
+
+            ws.onopen = () => {
+                setSocket(ws);
+                const userId = (session.data?.user as any)?.id;
+                setUser(userId ? { id: userId } : null);
+                setLoading(false);
+            };
+
+            ws.onclose = () => {
+                setSocket(null);
+                setLoading(false);
+            };
+
+            ws.onerror = () => {
+                setConnectionError(true);
+                setSocket(null);
+                setLoading(false);
+            };
+
+            return () => ws.close(); // cleanup
+        } else if (session.status === "unauthenticated") {
+            setLoading(false);
         }
-    }, [socket, session.data]);
-
+    }, [session.status, session.data?.user]);
 
     return <SocketContext.Provider value={{socket, user, connectionError, loading, setUser}}>{children}</SocketContext.Provider>
 };

@@ -25,6 +25,10 @@ export default function Component({params}: {params:Promise<{spaceid:string}>}) 
 
     useEffect(() => {
 
+        //guards
+        if(loading)  return;
+        if(!user)   return;
+
             async function fetchCreatorId() {
                 try {
                     //get the user data at that spaces url
@@ -49,7 +53,7 @@ export default function Component({params}: {params:Promise<{spaceid:string}>}) 
         }
         fetchCreatorId();
            ///called it here
-    }, [spaceid]) ;  //whenever the spaces id changes
+    }, [spaceid, loading, user]) ;  //whenever the spaces id changes
 
 
     useEffect(() => {
@@ -107,8 +111,9 @@ export default function Component({params}: {params:Promise<{spaceid:string}>}) 
 
     if(creatorId===user.id){
         router.push(`/dashboard/${spaceid}`)
+        return null;
     }
-
+    console.log("Rendering StreamView with:", { creatorId, spaceid, user: !!user, socket: !!socket });
     return <StreamView creatorId={creatorId as string} playVideo={false} spaceId={spaceid}></StreamView>
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-//import { SocketContextProvider } from "@/context/socket-context";
+import { SocketContextProvider } from "@/context/socket-context";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { SessionProvider } from "next-auth/react";
@@ -13,7 +13,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <WalletProvider wallets={[]} autoConnect>
                 <WalletModalProvider>
                     <SessionProvider>
+                        <SocketContextProvider>
                        {children}
+                        </SocketContextProvider>
                     </SessionProvider>
                 </WalletModalProvider>
             </WalletProvider>
