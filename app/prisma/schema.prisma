@@ -1,11 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// This is the Prisma schema file,
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -16,11 +12,11 @@ datasource db {
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
-  password     String?
   name         String?
+  password     String?
   provider     Provider
-  stream       Stream[] // every user has bunch of streams
-  upvote       Upvote[]
+  streams      Stream[] @relation("user")
+  upvotes      Upvote[]
   addedStreams Stream[] @relation("addedBy")
   hostedSpaces Space[]  @relation("hostedBy")
 }
@@ -30,20 +26,21 @@ model Stream {
   type          StreamType
   url           String
   extractedId   String
-  title_        String         @default("")
+  title         String         @default("")
   smallImg      String         @default("")
   bigImg        String         @default("")
   active        Boolean        @default(true)
-  userId        String
-  user          User           @relation(fields: [userId], references: [id])
-  upvotes       Upvote[]
-  played        Boolean
+  played        Boolean        @default(false)
   playedTs      DateTime?
+  createAt      DateTime       @default(now())
+  upvotes       Upvote[]
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], name: "user")
+  currentStream CurrentStream?
   addedBy       String
   addedByUser   User           @relation("addedBy", fields: [addedBy], references: [id])
   spaceId       String?
   space         Space?         @relation("spaceStreams", fields: [spaceId], references: [id], onDelete: Cascade)
-  currentStream CurrentStream?
 }
 
 model CurrentStream {
@@ -60,7 +57,7 @@ model Upvote {
   userId   String
   streamId String
   user     User   @relation(fields: [userId], references: [id])
-  stream   Stream @relation(fields: [streamId], references: [id])
+  stream   Stream @relation(fields: [streamId], references: [id], onDelete: Cascade)
 
   @@unique([userId, streamId])
 }

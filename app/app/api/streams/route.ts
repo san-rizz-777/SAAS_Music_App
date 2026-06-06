@@ -1,75 +1,163 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/app/lib/db";
+import prisma from "@/lib/db";
 import youtubesearchapi from "youtube-search-api";
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import {authOptions} from "@/lib/next-options";
+import {YT_REGEX} from "@/lib/utils";
 
-// ─── Regex ────────────────────────────────────────────────────────────────────
-// Matches standard (?v=), short (youtu.be/), embed, and mobile YouTube URLs.
-// Playlist params (list=, index=) are allowed — we only care about the video ID.
-const YT_REGEX = new RegExp(
-    "^(?:https?:\\/\\/)?(?:www\\.)?(?:m\\.)?(?:youtube\\.com\\/(?:watch\\?(?:.*&)?v=|embed\\/|v\\/)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})(?:[?&]\\S+)?$"
-);
 
-/** Pull the 11-char video ID from any supported YouTube URL */
-function extractYouTubeId(url: string): string | null {
-    // For watch URLs, prefer parsing v= directly so order of params doesn't matter
-    try {
-        const parsed = new URL(url.startsWith("http") ? url : "https://" + url);
-        if (
-            parsed.hostname.replace("www.", "").replace("m.", "") === "youtube.com" &&
-            parsed.pathname === "/watch"
-        ) {
-            const v = parsed.searchParams.get("v");
-            if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
-        }
-    } catch {
-        // fall through to regex for short/embed URLs
-    }
-    const match = url.match(YT_REGEX);
-    return match ? match[1] : null;
-}
-
-// ─── Schemas ─────────────────────────────────────────────────────────────────
-
-/** POST /api/streams  — add a song to a space's queue */
+//validation schema
 const CreateStreamSchema = z.object({
     creatorId: z.string(),
     url: z.string(),
     spaceId: z.string(), // required by StreamView2
 });
 
-/** GET /api/streams  — fetch queue + current stream for a space */
-// (params come from query string, validated manually below)
+const MAX_QUEUE_LEN = 20;
 
-// ─── POST ────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
     try {
-        const body = CreateStreamSchema.parse(await req.json());
+        const session = await getServerSession(authOptions);
 
-        const extractedId = extractYouTubeId(body.url);
-        if (!extractedId) {
+        //authentication
+        if (!session?.user.id) {
             return NextResponse.json(
-                { message: "Invalid YouTube URL" },
-                { status: 400 }
+                {
+                    message: "Unauthenticated",
+                },
+                {
+                    status: 403,
+                },
+            );
+        }
+        const user = session.user;
+
+        const data = CreateStreamSchema.parse(await req.json());
+
+        if(!data.url.trim()){
+            return NextResponse.json({message: "Youtube link cannot be empty!!!"}, {status: 400});
+        }
+
+        const isYt = data.url.match(YT_REGEX);
+        const videoId = data.url ? data.url.match(YT_REGEX)?.[1] : null;
+
+
+        if (!isYt || !videoId) {
+            return NextResponse.json(
+                {
+                    message: "Invalid YouTube URL format!!!!",
+                },
+                {
+                    status: 400,
+                },
             );
         }
 
         // Fetch video metadata from YouTube
-        const res = await youtubesearchapi.GetVideoDetails(extractedId);
+        const res = await youtubesearchapi.GetVideoDetails(videoId);
 
-        if (!res || !res.title) {
-            return NextResponse.json(
-                { message: "Could not fetch video details" },
-                { status: 422 }
-            );
+        //check if the user is not the creator
+        if(user.id !== data.creatorId){
+            const tenMinutesAgo = new Date(Date.now() - 10*60*1000);
+            const twoMinutesAgo =  new Date(Date.now() - 10*60*1000);
+
+        //getting the users last
+        const userRecentStreams = await prisma.stream.count({
+            where: {
+                userId: data.creatorId,
+                addedBy: user.id,
+                createAt: {
+                    gte: tenMinutesAgo,
+                },
+            },
+        });
+
+            // Check for duplicate song in the last 10 minutes
+            const duplicateSong = await prisma.stream.findFirst({
+                where: {
+                    userId: data.creatorId,
+                    extractedId: videoId,
+                    createAt: {
+                        gte: tenMinutesAgo,
+                    },
+                },
+            });
+
+            if (duplicateSong) {
+                return NextResponse.json(
+                    {
+                        message: "This song was already added in the last 10 minutes",
+                    },
+                    {
+                        status: 429,
+                    },
+                );
+            }
+
+            // Rate limiting checks for non-creator users
+            const streamsLastTwoMinutes = await prisma.stream.count({
+                where: {
+                    userId: data.creatorId,
+                    addedBy: user.id,
+                    createAt: {
+                        gte: twoMinutesAgo,
+                    },
+                },
+            });
+
+            //rate limit exceeding error
+            if (streamsLastTwoMinutes >= 6) {
+                return NextResponse.json(
+                    {
+                        message:
+                            "Rate limit exceeded: You can only add 5 songs per 2 minutes",
+                    },
+                    {
+                        status: 429,
+                    },
+                );
+            }
+
+            ///for ten minutes timestamp
+            if (userRecentStreams >= 12) {
+                return NextResponse.json(
+                    {
+                        message:
+                            "Rate limit exceeded: You can only add 12 songs per 10 minutes",
+                    },
+                    {
+                        status: 429,
+                    },
+                );
+            }
         }
 
         // Sort thumbnails ascending by width; pick second-largest as smallImg
-        const thumbnails: { url: string; width: number }[] =
-            res.thumbnail?.thumbnails ?? [];
-        thumbnails.sort((a, b) => a.width - b.width);
+        const thumbnails = res.thumbnail.thumbnails;
+        thumbnails.sort((a: { width: number }, b: { width: number }) =>
+            a.width < b.width ? -1 : 1,
+        );
+
+        ///count the no. of streams at present
+        const existingActiveStreams = await db.stream.count({
+            where: {
+                spaceId: data.spaceId,
+                played: false,
+            },
+        });
+
+        //if exceeding the max queue length
+        if (existingActiveStreams >= MAX_QUEUE_LEN) {
+            return NextResponse.json(
+                {
+                    message: "Queue is full",
+                },
+                {
+                    status: 429,
+                },
+            );
+        }
 
         const FALLBACK_IMG =
             "https://www.shutterstock.com/image-vector/old-computer-browser-90s-404-260nw-2664184569.jpg";
@@ -84,119 +172,116 @@ export async function POST(req: NextRequest) {
         // Persist the stream
         const stream = await prisma.stream.create({
             data: {
-                userId: body.creatorId,
-                spaceId: body.spaceId,   // ← was missing before
-                url: body.url,
-                extractedId,
+                userId: data.creatorId,
+                addedBy: user.id,
+                url: data.url,
+                extractedId: videoId,
                 type: "Youtube",
-                title_: res.title,
-                smallImg,
-                bigImg,
-            } as Prisma.StreamUncheckedCreateInput,
+                title: res.title ?? "Can't find video!!!",
+                smallImg: smallImg,
+                bigImg: bigImg,
+                spaceId:data.spaceId
+            },
         });
 
         // Return the shape StreamView2 expects when it appends to queue
+        return NextResponse.json({
+            ...stream,
+            hasUpvoted: false,
+            upvotes: 0,
+        });
+    } catch (e) {
+        console.error(e);
         return NextResponse.json(
             {
-                message: "Added Stream Successfully!",
-                id: stream.id,
-                type: stream.type,
-                url: stream.url,
-                extractedId: stream.extractedId,
-                title: stream.title_,
-                smallImg: stream.smallImg,
-                bigImg: stream.bigImg,
-                active: stream.active ?? false,
-                userId: stream.userId,
-                upvotes: 0,
-                haveUpvoted: false,
+                message: "Error while adding a stream",
             },
-            { status: 201 }  // 201 Created (was wrongly 200 inside a 200 body before)
-        );
-    } catch (e) {
-        if (e instanceof z.ZodError) {
-            return NextResponse.json(
-                { message: "Invalid request body", errors: e.flatten() },
-                { status: 400 }
-            );
-        }
-        console.error("[POST /api/streams]", e);
-        return NextResponse.json(
-            { message: "Internal server error" },
-            { status: 500 }
+            {
+                status: 500,
+            },
         );
     }
 }
 
-// ─── GET ─────────────────────────────────────────────────────────────────────
+
 export async function GET(req: NextRequest) {
-    const { searchParams } = req.nextUrl;
-    const creatorId = searchParams.get("creatorId");
-    const spaceId = searchParams.get("spaceId"); // ← was missing before
+    const session  = await getServerSession(authOptions);
+    const spaceId = req.nextUrl.searchParams.get("spaceId");
 
-    if (!creatorId || !spaceId) {
+    if (!session?.user.id) {
         return NextResponse.json(
-            { message: "creatorId and spaceId are required" },
-            { status: 400 }
+            {
+                message: "Unauthenticated",
+            },
+            {
+                status: 403,
+            },
         );
     }
+    const user = session.user;
 
-    // Resolve the session user so we can compute haveUpvoted per stream
-    const session = await getServerSession();
-    const sessionUserId: string | undefined = (session?.user as any)?.id;
-
-    try {
-        // Fetch queued (non-active) streams for this space
-        const streams = await prisma.stream.findMany({
-            where: {
-                userId: creatorId,
-                spaceId,
-                active: false, // active stream is handled separately below
-            },
-            include: {
-                _count: { select: { upvotes: true } },
-                // Include only the current user's upvote (if any) to compute haveUpvoted
-                upvotes: sessionUserId
-                    ? { where: { userId: sessionUserId } }
-                    : false,
-            },
-            orderBy: { id: "asc" },
-        });
-
-        // Fetch the currently-playing stream for this space
-        const currentStreamRecord = await prisma.currentStream.findFirst({
-            where: { spaceId },
-            include: {
-                stream: true,
-            },
-        });
-
-        // Shape each queued stream to match the Video interface in StreamView2
-        const shapedStreams = streams.map((s: any) => ({
-            id: s.id,
-            type: s.type,
-            url: s.url,
-            extractedId: s.extractedId,
-            title: s.title_,
-            smallImg: s.smallImg,
-            bigImg: s.bigImg,
-            active: s.active,
-            userId: s.userId,
-            upvotes: s._count.upvotes,
-            haveUpvoted: sessionUserId
-                ? (s.upvotes?.length ?? 0) > 0
-                : false,
-        }));
-
+    if (!spaceId) {
         return NextResponse.json({
-            streams: shapedStreams,
-            currentStream: currentStreamRecord ?? null,
-        });
-    } catch (e) {
-        console.error("[GET /api/streams]", e);
-        return NextResponse.json(
-            { message: "Internal server error" },
-            { status: 500 }
-        );
+            message: "Error!!! spaceId not found!!!",
+        }, {
+            status: 411
+        })
     }
+
+    const [space, activeStream] = await Promise.all([
+        prisma.space.findUnique({
+            where: {
+                id: spaceId,
+            },
+            include: {
+                streams: {
+                    include: {
+                        _count: {
+                            select: {
+                                upvotes: true
+                            }
+                        },
+                        upvotes: {
+                            where: {
+                                userId: session?.user.id
+                            }
+                        }
+
+                    },
+                    where:{
+                        played:false
+                    }
+                },
+                _count: {
+                    select: {
+                        streams: true
+                    }
+                },
+            },
+        }),
+        prisma.currentStream.findFirst({
+            where: {
+                spaceId: spaceId
+            },
+            include: {
+                stream: true
+            }
+        })
+    ]);
+
+    //get the hostId and checks if it is creator
+    const hostId =space?.hostId;
+    const isCreator = session.user.id=== hostId;
+
+    return NextResponse.json({
+        streams: space?.streams.map(({_count, ...rest}) => ({
+            ...rest,
+            upvotes: _count.upvotes,
+            haveUpvoted: !!rest.upvotes.length, /// !!true -> !false -> true type thing
+        })),
+        activeStream,
+        hostId,
+        isCreator,
+        spaceName:space?.name
+    });
 }
