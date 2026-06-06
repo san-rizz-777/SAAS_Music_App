@@ -1,26 +1,19 @@
 import {NextRequest, NextResponse} from "next/server";
-import prisma from "@/app/lib/db";
+import prisma from "@/lib/db";
 import {z} from "zod";
 import {getServerSession} from "next-auth";
 
 const UpvoteSchema = z.object({
     streamId: z.string(),
+    spaceId: z.string(),
 })
 
 export async function POST(req:NextRequest)
 {
     const session = await getServerSession();
 
-    ///TODO :- can get the rid of the prisma call here
-    //to authenticate the user
-    const user = await prisma.user.findFirst({
-where:{
-    email: session?.user?.email ?? ""
-}
-    });
-
     //error handling
-    if(!user) {
+    if(!session?.user) {
         return NextResponse.json({
                 message: "Unauthenticated"
             },
@@ -29,6 +22,8 @@ where:{
             });
     }
 
+    const user = session.user;
+
 ////try-catch error handling
 try{
     const data = UpvoteSchema.parse(await req.json());
@@ -36,13 +31,13 @@ try{
         data:{
             userId: user.id,
             streamId: data.streamId
-        }
+        },
     });
 
 //upvoted
 return NextResponse.json({
     message: "Upvoted Successfully!!!",
-});
+}, {status:201});
 
 }
 catch(e){

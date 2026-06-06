@@ -1,122 +1,50 @@
-"use client"
+"use client";
 
-import {useEffect, useState} from "react";
-import {useSocket} from "@/context/socket-context";
-import jwt from "jsonwebtoken"
-import StreamView from "@/components/StreamView";
-import ErrorScreen from "@/components/ErrorScreen";
-import LoadingScreen from "@/components/LoadingScreen";
-import {useRouter} from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { use } from "react";
+import StreamView from "@/components/StreamView";
+import StreamView2 from "@/components/StreamView2";
+import LoadingScreen from "@/components/LoadingScreen";
+import ErrorScreen from "@/components/ErrorScreen";
 
-// Default styles that can be overridden by the app
-import '@solana/wallet-adapter-react-ui/styles.css';
-
-export default function Component({params}: {params:Promise<{spaceid:string}>}) {
-
-    const { spaceid } = use(params);  // unwrap the promise
-
-    ///get the user and socket from custom hook
-    const {socket, user, setUser, loading, connectionError} = useSocket();
-
-    const [creatorId, setCreatorId] = useState<string>();
-    const [loading_1, setLoading1] = useState<boolean>(true);
+export default function SpacePage({ params }: { params: Promise<{ spaceid: string }> }) {
+    const { spaceid } = use(params);
+    const { data: session, status } = useSession();
     const router = useRouter();
+    const [creatorId, setCreatorId] = useState<string>();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>();
 
     useEffect(() => {
+        if (status === "loading") return;
+        if (status === "unauthenticated") { router.push("/auth"); return; }
 
-        //guards
-        if(loading)  return;
-        if(!user)   return;
-
-            async function fetchCreatorId() {
-                try {
-                    //get the user data at that spaces url
-                    const response = await fetch(`/api/spaces?spaceId=${spaceid}`, {
-                        method: "GET",
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok || !data.success) {
-                        throw new Error(data.message || "Failed to fetch space host's ID.");
-                    }
-
-                    setCreatorId(data.hostId);
-                }
-    catch(error) {
-            console.log(error);
-        }
-    finally {
-                    setLoading1(false);
-                }
-        }
-        fetchCreatorId();
-           ///called it here
-    }, [spaceid, loading, user]) ;  //whenever the spaces id changes
-
-
-    useEffect(() => {
-        if(user && socket && creatorId){
-            const token = user?.token || jwt.sign({
-                creatorId: creatorId,
-                userId: user?.id,
-            },
-                process.env.NEXT_PUBLIC_SECRET || "secret",
-                {
-                    expiresIn: "24h",
-                }
-                );
-
-            ///send the message via socket
-            socket?.send(
-                JSON.stringify({
-                    type: "join-room",
-                    data:{
-                        token, spaceid
-                    }
-                })
-            );
-
-            if(!user.token)
-            {
-                setUser({...user, token});
+        async function fetchSpace() {
+            try {
+                const res = await fetch(`/api/spaces?spaceId=${spaceid}`);
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message ?? "Space not found");
+                setCreatorId(data.hostId);
+            } catch (e: any) {
+                setError(e.message);
+            } finally {
+                setLoading(false);
             }
-
         }
-    }, [socket, user, spaceid, creatorId]);
+        fetchSpace();
+    }, [spaceid, status]);
 
+    if (status === "loading" || loading) return <LoadingScreen />;
+    if (error) return <ErrorScreen>{error}</ErrorScreen>;
+    if (!session?.user) return <ErrorScreen>Please log in</ErrorScreen>;
+    if (!creatorId) return <ErrorScreen>Space not found</ErrorScreen>;
 
-    ///errors and their display
-    if(connectionError)
-    {
-       return  <ErrorScreen>Cannot connect to the socket.....</ErrorScreen>
-    }
-
-    //if screen is loading
-    if(loading)
-    {
-        return <LoadingScreen />;
-    }
-
-    if(!user)
-    {
-        return <ErrorScreen>Please log in...... </ErrorScreen>;
-    }
-
-    if(loading_1)
-    {
-        return <LoadingScreen />;
-    }
-
-    if(creatorId===user.id){
-        router.push(`/dashboard/${spaceid}`)
+    if (creatorId === session.user.id) {
+        router.push(`/dashboard/${spaceid}`);
         return null;
     }
-    console.log("Rendering StreamView with:", { creatorId, spaceid, user: !!user, socket: !!socket });
-    return <StreamView creatorId={creatorId as string} playVideo={false} spaceId={spaceid}></StreamView>
+
+    return <StreamView2 creatorId={creatorId} spaceId={spaceid} playVideo={false} />;
 }
-
-
-export const dynamic = "auto"
-

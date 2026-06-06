@@ -1,7 +1,7 @@
 import {getServerSession} from "next-auth";
 import {NextResponse, NextRequest} from "next/server";
-import prisma from "@/app/lib/db";
-import {authOptions} from "@/app/lib/next-options";
+import prisma from "@/lib/db";
+import {authOptions} from "@/lib/next-options";
 
 
 ///post end point to create a space
@@ -10,6 +10,7 @@ export async function POST(req:NextRequest){
         //get the session
         const session = await getServerSession(authOptions);
 
+        ///if the user tries to create space without getting logged in
         if (!session?.user?.id) {
             return NextResponse.json({
                     success: false, message: "You must be logged in to create a new Space",
@@ -19,6 +20,7 @@ export async function POST(req:NextRequest){
 
         const data = await req.json();
 
+        //user tries to create space without name
         if (!data.spaceName) {
             return NextResponse.json({
                     success: false, message: "Space name is required!!!",
@@ -42,7 +44,7 @@ export async function POST(req:NextRequest){
     catch(err:any){
 
         //if it has been unauthenticated
-        if(err.message == "Unauthenticated Request"){
+        if(err.message === "Unauthenticated Request"){
             return NextResponse.json(
                 {success:false, message:"You must be logged in to create a new Space!!!",}
                 ,
@@ -77,7 +79,7 @@ export async function DELETE(req:NextRequest){
                 {status: 401});
         }
 
-        //get the space from db to check exiatence
+        //get the space from db to check existence
         const space = await prisma.space.findUnique({
             where: {
                 id: spaceId,
@@ -97,6 +99,7 @@ export async function DELETE(req:NextRequest){
             }, {status: 403});   //bad request
         }
 
+        //delete space from db
         await prisma.space.delete({
             where: {id: spaceId}
         });
@@ -134,6 +137,7 @@ export async function GET(req:NextRequest){
                 select:{hostId:true}
             });
 
+            //if not found
             if (!space) {
                 return NextResponse.json({success:false, message:"Space does not exist!!!"}, {status:404})
             }

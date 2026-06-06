@@ -13,9 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <WalletProvider wallets={[]} autoConnect>
                 <WalletModalProvider>
                     <SessionProvider>
-                        <SocketContextProvider>
                        {children}
-                        </SocketContextProvider>
                     </SessionProvider>
                 </WalletModalProvider>
             </WalletProvider>

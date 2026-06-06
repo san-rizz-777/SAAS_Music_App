@@ -106,8 +106,12 @@
         secret: process.env.NEXTAUTH_SECRET ?? "secret",
         session: {strategy: "jwt"},
         callbacks:{
-            async jwt({token, account, profile}){
-
+            async jwt({token, account, profile, user}){
+                if (user) {
+                    // credentials login
+                    token.id = user.id as string;
+                    token.email = user.email as string;
+                }
                 if(account && profile){
                     token.email = profile.email as string
                     token.id = account.access_token
@@ -115,6 +119,7 @@
                 return token;
             },
             async session({session, token}){
+                console.log("TOKEN IN SESSION CALLBACK:", JSON.stringify(token));
                 try{
                     const user = await prisma.user.findUnique({
                         where:{

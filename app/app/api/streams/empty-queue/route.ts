@@ -1,6 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
-import {authOptions} from "@/app/lib/next-options";
-import prisma from "@/app/lib/db"
+import {authOptions} from "@/lib/next-options";
+import prisma from "@/lib/db"
 import {getServerSession} from "next-auth";
 
 
@@ -20,7 +20,7 @@ export default async function POST(req:NextRequest){
     }
 
     const user = session.user;
-    const data_ = await req.json();
+    const data = await req.json();
 
     //update the db as finished the playing
     try {
@@ -28,7 +28,7 @@ export default async function POST(req:NextRequest){
             where: {
                 userId: user.id,
                 played: false,
-                spaceId: data_.spaceId,
+                spaceId: data.spaceId,
             },
             data: {
                 played: true,
@@ -38,7 +38,7 @@ export default async function POST(req:NextRequest){
 
         ///send the success response
         return NextResponse.json({
-            message: "Queue emptied succesfully!!!!",
+            message: "Queue emptied successfully!!!!",
         },{
             status:200,
         });

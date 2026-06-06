@@ -1,6 +1,6 @@
-import prisma from "@/app/lib/db";
+import prisma from "@/lib/db";
 import {getServerSession} from "next-auth";
-import {authOptions} from "@/app/lib/next-options";
+import {authOptions} from "@/lib/next-options";
 import {NextResponse, NextRequest } from "next/server";
 
 
@@ -22,39 +22,39 @@ export async function GET(req:NextRequest){
 
     //get the user and the space id
     const user = session.user;
-    const spaceid = req.nextUrl.searchParams.get("spaceid");
+    const spaceId = req.nextUrl.searchParams.get("spaceId");
 
     ///find the most upvoted stream
     const mostUpvotedStream = await prisma.stream.findFirst({
         where:{ //taken the one which is not played
             userId: user.id,
-            spaceId: spaceid,
             played:false,
+            spaceId: spaceId,
         },
         orderBy:{     //order in descending order
             upvotes:{
-                 _count:"desc"
-            }
-        }
+                 _count:"desc",
+            },
+        },
     });
 
     await Promise.all([
-        await prisma.currentStream.upsert({
+        prisma.currentStream.upsert({
             where:{
-                spaceId:spaceid as string,
+                spaceId:spaceId as string,
             },
             update:{
                 userId: user.id,
                 streamId: mostUpvotedStream?.id,
-                spaceId: spaceid,
+                spaceId: spaceId,
             },
             create:{
                 userId: user.id,
                 streamId: mostUpvotedStream?.id,
-                spaceId: spaceid,
+                spaceId: spaceId,
             }
         }),
-     await prisma.stream.update({
+      prisma.stream.update({
          where:{
              id: mostUpvotedStream?.id ?? "",
          },

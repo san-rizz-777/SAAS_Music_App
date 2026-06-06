@@ -1,14 +1,15 @@
-import prisma from "@/app/lib/db"
+import prisma from "@/lib/db"
 import {NextResponse, NextRequest} from "next/server";
 import {getServerSession} from "next-auth";
-import {authOptions} from "@/app/lib/next-options"
+import {authOptions} from "@/lib/next-options"
 
 
 ///Here we are creating a get endpoint to give the user all the info about streams and upvotes
 export default async function GET(req: NextRequest){
-    //get the session info of the user
+
     const session = await getServerSession(authOptions);
 
+    //authentication
     if(!session?.user)
     {
         ///if user not found
@@ -34,8 +35,8 @@ export default async function GET(req: NextRequest){
             upvotes:{
                 where:{
                     userId: user.id
-                }
-            }
+                },
+            },
         },
     });
 
