@@ -13,7 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <WalletProvider wallets={[]} autoConnect>
                 <WalletModalProvider>
                     <SessionProvider>
-                       {children}
+                   <SocketContextProvider>{children}</SocketContextProvider>
                     </SessionProvider>
                 </WalletModalProvider>
             </WalletProvider>
@@ -22,10 +22,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-
-    // Override the script tag on the client side to suppress the React 19 warning
-    const scriptProps = typeof window === "undefined"
-        ? undefined
-        : ({ type: "application/json" } as const);
     return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }

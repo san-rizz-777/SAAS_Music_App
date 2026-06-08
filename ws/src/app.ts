@@ -32,7 +32,7 @@ type Data = {
     streamId: string;
 };
 
-
+////sends first http message from server and upgrades it back to ws
 function createHttpServer() {
     return http.createServer((req, res) => {
         res.statusCode = 200;
@@ -41,6 +41,7 @@ function createHttpServer() {
     });
 }
 
+//to handle the state of connection
 async function handleConnection(ws: WebSocket) {
     ws.on("message", async (raw: { toString: () => string }) => {
         const { type, data } = JSON.parse(raw.toString()) || {};
@@ -59,6 +60,7 @@ async function handleConnection(ws: WebSocket) {
     });
 }
 
+///verifies and lets user in
 async function handleJoinRoom(ws: WebSocket, data: Data) {
     jwt.verify(
         data.token,
@@ -80,6 +82,8 @@ async function handleJoinRoom(ws: WebSocket, data: Data) {
     );
 }
 
+
+///major function based on type excutes the user action
 async function processUserAction(type: string, data: Data) {
     switch (type) {
         case "cast-vote":
@@ -135,6 +139,7 @@ async function processUserAction(type: string, data: Data) {
     }
 }
 
+///calls the processUserAction and performs the specific action
 async function handleUserAction(ws: WebSocket, type: string, data: Data) {
     const user = RoomManager.getInstance().users.get(data.userId);
 
@@ -146,6 +151,7 @@ async function handleUserAction(ws: WebSocket, type: string, data: Data) {
     }
 }
 
+//main entry point
 async function main() {
     const server = createHttpServer();
     const wss = new WebSocketServer({ server });
@@ -155,6 +161,6 @@ async function main() {
 
     const PORT = process.env.PORT ?? 8080;
     server.listen(PORT, () => {
-        console.log(`${process.pid}: WebSocket server is running on ${PORT}`);
+        console.log(`${process.pid}: WebSocket server is running on ${PORT}`);  ///giving process pid to quickly kill the process
     });
 }

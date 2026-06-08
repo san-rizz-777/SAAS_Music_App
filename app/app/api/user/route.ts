@@ -1,6 +1,6 @@
 import {getServerSession} from "next-auth";
 import {NextRequest, NextResponse} from "next/server";
-import {authOptions} from "@/app/lib/next-options"
+import {authOptions} from "@/lib/next-options"
 
 export async function GET(req: NextRequest) {
     //create the session instance first

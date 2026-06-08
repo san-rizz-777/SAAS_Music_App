@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
         );
 
         ///count the no. of streams at present
-        const existingActiveStreams = await db.stream.count({
+        const existingActiveStreams = await prisma.stream.count({
             where: {
                 spaceId: data.spaceId,
                 played: false,

@@ -16,7 +16,7 @@ export default function Component({params}: {params: Promise<{spaceId: string}>}
     useEffect(() => {
         async function fetchHostId() {
             try {
-                const response = await fetch(`/api/spaces?spaceId=${spaceId}`, {
+                const response = await fetch(`/api/spaces/?spaceId=${spaceId}`, {
                     method: "GET"
                 });
                 const data = await response.json();
@@ -78,8 +78,8 @@ export default function Component({params}: {params: Promise<{spaceId: string}>}
         return <LoadingScreen />;
     }
 
-    if (user.id !== creatorId) {
-        return <StreamView creatorId={creatorId as string} playVideo={false} spaceId={spaceId} />;
+    if (user.id != creatorId) {
+        return <ErrorScreen>You are not creator of this space!!!</ErrorScreen>;
     }
 
     return <StreamView creatorId={creatorId as string} playVideo={true} spaceId={spaceId} />;

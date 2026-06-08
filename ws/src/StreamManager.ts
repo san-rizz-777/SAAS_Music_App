@@ -22,6 +22,7 @@ const redisCredentials = {
     url: `redis://${connection.username}:${connection.password}@${connection.host}:${connection.port}`,
 };
 
+///Major class to apply user actions
 export class RoomManager {
     private static instance: RoomManager;
     public spaces: Map<string, Space>;
@@ -115,6 +116,7 @@ export class RoomManager {
         }
     }
 
+    ///creates a room[space] by a creator
     async createRoom(spaceId: string) {
         console.log(process.pid + ": createRoom: ", { spaceId });
         if (!this.spaces.has(spaceId)) {
@@ -122,24 +124,12 @@ export class RoomManager {
                 users: new Map<string, User>(),
                 creatorId: "",
             });
-            // const roomsString = await this.redisClient.get("rooms");
-            // if (roomsString) {
-            //   const rooms = JSON.parse(roomsString);
-            //   if (!rooms.includes(creatorId)) {
-            //     await this.redisClient.set(
-            //       "rooms",
-            //       JSON.stringify([...rooms, creatorId])
-            //     , {
-            //       EX: 3600 * 24
-            //     });
-            //   }
-            // } else {
-            //   await this.redisClient.set("rooms", JSON.stringify([creatorId]));
-            // }
+
             await this.subscriber.subscribe(spaceId, this.onSubscribeRoom);
         }
     }
 
+    ///get the users inside the room
     async addUser(userId: string, ws: WebSocket, token: string) {
         let user = this.users.get(userId);
         if (!user) {
@@ -155,6 +145,7 @@ export class RoomManager {
         }
     }
 
+    ///main function to join the user in a room
     async joinRoom(
         spaceId: string,
         creatorId: string,
@@ -167,11 +158,13 @@ export class RoomManager {
         let space = this.spaces.get(spaceId);
         let user = this.users.get(userId);
 
+        //if space not present creates one
         if (!space) {
             await this.createRoom(spaceId);
             space = this.spaces.get(spaceId);
         }
 
+        //adds the user if not present
         if (!user) {
             await this.addUser(userId, ws, token);
             user = this.users.get(userId);
@@ -181,6 +174,7 @@ export class RoomManager {
             }
         }
 
+        //setting websocket to specific space
         this.wstoSpace.set(ws, spaceId);
 
         if (space && user) {
@@ -193,6 +187,7 @@ export class RoomManager {
         }
     }
 
+    ///for each user and for their each websocket send the empty queue message
     publishEmptyQueue(spaceId: string) {
         const space = this.spaces.get(spaceId);
         space?.users.forEach((user, userId) => {
@@ -206,6 +201,7 @@ export class RoomManager {
         });
     }
 
+    ///update in the db about the empty of queue
     async adminEmptyQueue(spaceId: string) {
         const room = this.spaces.get(spaceId);
         const userId = this.spaces.get(spaceId)?.creatorId;

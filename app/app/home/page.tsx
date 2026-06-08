@@ -1,5 +1,5 @@
 import HomeView from "@/components/HomeView";
-import { authOptions } from "@/app/lib/next-options";
+import { authOptions } from "@/lib/next-options";
 import { getServerSession } from "next-auth";
 
 

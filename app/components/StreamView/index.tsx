@@ -8,16 +8,7 @@ import NowPlaying from "./NowPlaying";
 import Queue from "./Queue";
 import AddSongForm from "./AddSongForm";
 import { Appbar } from "../Appbar";
-
-type Video = {
-    id: string;
-    extractedId: string;
-    title_: string;
-    smallImg: string;
-    bigImg: string;
-    upvotes: { userId: string }[];
-    played: boolean;
-};
+import {useSocket} from "@/context/socket-context";
 
 export default function StreamView({
                                        creatorId,
@@ -35,49 +26,106 @@ export default function StreamView({
     const [playNextLoader, setPlayNextLoader] = useState(false);
     const [spaceName, setSpaceName] = useState("");
 
+    const {socket, sendMessage} = useSocket();
     const user = useSession().data?.user;
 
-    // ── fetch streams + current ──────────────────────────────
+
     async function refreshStreams() {
         try {
-            const res = await fetch(`/api/streams?creatorId=${creatorId}&spaceId=${spaceId}`);
-            const json = await res.json();
+            const res = await fetch(`/api/streams/?spaceId=${spaceId}`, {credentials: "include"});
+            const data = await res.json();
 
             setQueue(
-                (json.streams ?? []).sort(
-                    (a: Video, b: Video) => b.upvotes.length - a.upvotes.length
-                )
+                data.streams.sort(
+                    (a: any, b: any) => (b.upvotes < a.upvotes ? 1 : -1)
+                ),
             );
 
-            setCurrentVideo(json.currentStream?.stream ?? null);
-        } catch {
+            setCurrentVideo((video) => {
+                if (video?.id === data.activeStream?.stream?.id) {  return video; }
+
+                return data.activeStream.stream;
+            });
+
+            setSpaceName(data.spaceName);
+        } catch (error){
             enqueueToast("error", "Failed to load streams");
         }
+
+        setPlayNextLoader(false);
     }
 
-    // ── poll every 5 seconds ─────────────────────────────────
+
+    useEffect(() => {
+        if(socket){
+            socket.onmessage = async (event) => {
+                const {type, data} = JSON.parse(event.data) || {};
+
+                if(type === `new-stream/${spaceId}`)
+                {
+                    console.log(type);
+                    addToQueue(data);
+                }
+                else if(type === `new-vote/${spaceId}`){
+                    setQueue((prev) => {
+                        return prev
+                            .map((v) => {
+                                if(v.id === data.streamId)
+                                {
+                                    return {
+                                        ...v,
+                                        upvotes: data.upvotes + (data.vote === "upvote"? 1 : -1),
+                                        haveUpvoted:
+                                        data.votedBy === user?.id? data.vote === "upvote" : v.haveUpvoted,
+                                    };
+                                }
+                                return v;
+                            })
+                            .sort((a, b) => b.upvotes - a.upvotes)
+                    });
+                } else if(type === `error`){
+                    enqueueToast("error", data.message);
+                    setLoading(false);
+                } else if(type === `play-next/${spaceId}`){
+                    await refreshStreams();
+                } else if(type === `remove-song/${spaceId}`){
+                    setQueue((prev) => {
+                        return prev.filter((stream) => stream.id !== data.streamId);
+                    });
+                } else if(type === `empty-queue/${spaceId}`){
+                    setQueue([]);
+                }
+            };
+        }
+    }, [socket]);
+
+    //refresh the streams after evry re-render
     useEffect(() => {
         refreshStreams();
-        const id = setInterval(refreshStreams, 5000);
-        return () => clearInterval(id);
-    }, [creatorId, spaceId]);
+    }, []);
 
-    // ── play next ────────────────────────────────────────────
-    async function playNext() {
+///getting the new video and adding to queue
+    async function addToQueue(newStream: any) {
+        setQueue((prev) => [...prev, newStream]);
+        setInputLink("");
+        setLoading(false);
+    }
+
+    const playNext = async () => {
         setPlayNextLoader(true);
-        try {
-            await fetch(`/api/next?spaceId=${spaceId}`);
-            await refreshStreams();
-        } catch {
-            enqueueToast("error", "Failed to play next");
-        } finally {
-            setPlayNextLoader(false);
-        }
-    }
+        sendMessage("play-next", {
+            spaceId,
+            userId: user?.id,
+        });
+    };
 
-    function enqueueToast(type: "error" | "success", message: string) {
-        type === "error" ? toast.error(message, { duration: 5000 }) : toast.success(message, { duration: 5000 });
-    }
+    const enqueueToast = (type: "error" | "success", message: string) => {
+        const toastFn = type === "error" ? toast.error : toast.success;
+
+        toastFn(message, {
+            duration: 5000,
+        });
+    };
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -95,7 +143,6 @@ export default function StreamView({
                         queue={queue}
                         userId={user?.id || ""}
                         spaceId={spaceId}
-                        onRefresh={refreshStreams}
                     />
                     <div className="col-span-2">
                         <div className="mx-auto w-full max-w-4xl space-y-6 p-4">
@@ -108,7 +155,7 @@ export default function StreamView({
                                 setInputLink={setInputLink}
                                 setLoading={setLoading}
                                 spaceId={spaceId}
-                                onSongAdded={refreshStreams}
+                                isSpectator={!playVideo}
                             />
                             <NowPlaying
                                 currentVideo={currentVideo}

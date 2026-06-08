@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 export function ThemeSwitcher() {
     const { theme, setTheme } = useTheme();
     const [isMounted, setIsMounted] = useState(false);
-    const isDark = theme === "dark";
+    const isDark = theme;
 
     useEffect(() => {
         setIsMounted(true);
@@ -17,7 +17,7 @@ export function ThemeSwitcher() {
     if (!isMounted) return null;
 
     const toggleTheme = () => {
-        setTheme(isDark ? "light" : "dark");
+        setTheme(isDark === "dark" ? "light" : "dark");
     };
 
     return (

@@ -1,11 +1,14 @@
 "use client";
 
-import { YT_REGEX } from "@/app/lib/utils";
+import { YT_REGEX } from "@/lib/utils";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
+import {useSocket} from "@/context/socket-context";
+import {useConnection} from "@solana/wallet-adapter-react";
+import {useSession} from "next-auth/react";
 
 type Props = {
     inputLink: string;
@@ -16,7 +19,7 @@ type Props = {
     loading: boolean;
     enqueueToast: (type: "error" | "success", message: string) => void;
     spaceId: string;
-    onSongAdded: () => void; // callback to refresh streams after adding
+    isSpectator:boolean
 };
 
 export default function AddSongForm({
@@ -28,8 +31,12 @@ export default function AddSongForm({
                                         userId,
                                         creatorId,
                                         spaceId,
-                                        onSongAdded,
+                                        isSpectator,
                                     }: Props) {
+
+    const {sendMessage} = useSocket();
+    const {connection} = useConnection();
+    const user = useSession().data?.user;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,31 +45,17 @@ export default function AddSongForm({
             enqueueToast("error", "Invalid URL — please use a YouTube link");
             return;
         }
+        else{
+            setLoading(true);
 
-        setLoading(true);
-        try {
-            const res = await fetch("/api/streams", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    creatorId,
-                    url: inputLink,
-                    spaceId,
-                }),
+            // sending back to socket
+            sendMessage("add to queue", {
+                spaceId, userId, url: inputLink,
             });
-
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.message ?? "Failed to add song");
-
-            enqueueToast("success", "Song added to queue!");
-            setInputLink("");
-            onSongAdded(); // refresh the queue
-        } catch (error: any) {
-            enqueueToast("error", error.message ?? "Error adding song");
-        } finally {
-            setLoading(false);
         }
+
+        setLoading(false);
+        setInputLink("");
     };
 
     const videoId = inputLink ? inputLink.match(YT_REGEX)?.[1] : undefined;
@@ -76,12 +69,13 @@ export default function AddSongForm({
             <form onSubmit={handleSubmit} className="space-y-2">
                 <Input
                     type="text"
-                    placeholder="Paste a YouTube link"
+                    placeholder="Paste a YouTube link!!!"
                     value={inputLink}
                     onChange={(e) => setInputLink(e.target.value)}
                 />
                 <Button
                     disabled={loading}
+                    onClick={handleSubmit}
                     type="submit"
                     className="w-full"
                 >

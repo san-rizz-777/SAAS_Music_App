@@ -6,7 +6,7 @@
 
     import { PrismaClientInitializationError } from "@prisma/client/runtime/library";
     import {emailSchema, passSchema} from "@/schema/crendentials-schema";
-    import prisma from "@/app/lib/db";
+    import prisma from "@/lib/db";
 
 
     export const authOptions: NextAuthOptions = {
@@ -23,7 +23,7 @@
             async authorize(credentials){
                 if(!credentials || !credentials.email || !credentials.password)
                 {
-                    return null;
+                    return null;             ////if the unauthorize just return error
                 }
 
                 ///validate the email
@@ -60,7 +60,7 @@
                                 password: hashedPass,
                                 provider: "Credentials",
                             }
-                        })
+                        });
 
                         return  newUser;
                     }
@@ -106,20 +106,16 @@
         secret: process.env.NEXTAUTH_SECRET ?? "secret",
         session: {strategy: "jwt"},
         callbacks:{
-            async jwt({token, account, profile, user}){
-                if (user) {
-                    // credentials login
-                    token.id = user.id as string;
-                    token.email = user.email as string;
-                }
-                if(account && profile){
-                    token.email = profile.email as string
-                    token.id = account.access_token
-                }
-                return token;
+            async jwt({token, account, profile}){
+              if(account && profile){
+                  token.email = profile.email as string;
+                  token.id = account.access_token;
+              }
+
+              return token;
             },
-            async session({session, token}){
-                console.log("TOKEN IN SESSION CALLBACK:", JSON.stringify(token));
+            async session({session, token}: {session: Session, token: JWT}){
+               // console.log("TOKEN IN SESSION CALLBACK:", JSON.stringify(token));
                 try{
                     const user = await prisma.user.findUnique({
                         where:{
@@ -141,11 +137,12 @@
                     throw error;
                 }
 
+                //return the session at end
                 return session;
             },
-            async signIn({account, profile}) : Promise<boolean>{
+            async signIn({account, profile}){
                 try{
-                    if(account?.provider == "google"){
+                    if(account?.provider === "google"){
 
                         //get the user
                         const user = await prisma.user.findUnique(
@@ -161,10 +158,10 @@
                             const newUser = await prisma.user.create({
                                 data: {
                                     email: profile?.email!,
-                                    name: profile?.name,
+                                    name: profile?.name || undefined,
                                     provider: "Google",
                                 }
-                            })
+                            });
                         }
                     }
                     return true;

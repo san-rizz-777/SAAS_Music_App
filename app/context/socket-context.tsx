@@ -8,7 +8,7 @@ type SocketContextType = {
     setUser: Dispatch<SetStateAction<{id: string, token?: string} | null>>;
     connectionError: boolean;
     loading: boolean;
-}
+};
 
 //creating a context
 const SocketContext = createContext<SocketContextType>({
@@ -28,30 +28,25 @@ export const SocketContextProvider = ({ children }: PropsWithChildren) => {
     ///create a instance of session
     const session = useSession();
 
-    //debugging
-    useEffect(() => {
-        console.log("Full session data:", JSON.stringify(session.data));
-    }, [session.data]);
-
     useEffect(() => {
 
-        if (session.status === "loading") return; // still resolving
-
-        if (session.status === "authenticated" && (session.data?.user as any)?.id) {
+        if (!socket && session.data?.user.id) {
             const ws = new WebSocket(process.env.NEXT_PUBLIC_WSS_URL as string);
 
+///opening the socket (listening)
             ws.onopen = () => {
                 setSocket(ws);
-                const userId = (session.data?.user as any)?.id;
-                setUser(userId ? { id: userId } : null);
+                setUser(session.data?.user || null);
                 setLoading(false);
             };
 
+            //closing the socket
             ws.onclose = () => {
                 setSocket(null);
                 setLoading(false);
             };
 
+            //when error occurs just make sure you close the socket
             ws.onerror = () => {
                 setConnectionError(true);
                 setSocket(null);

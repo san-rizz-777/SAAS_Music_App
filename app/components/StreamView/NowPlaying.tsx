@@ -8,13 +8,6 @@ import { Play } from "lucide-react";
 import YouTubePlayer from "youtube-player";
 import Image from "next/image";
 
-type Video = {
-    id: string;
-    extractedId: string;
-    title_: string;
-    bigImg: string;
-};
-
 type Props = {
     playVideo: boolean;
     currentVideo: Video | null;
@@ -28,11 +21,17 @@ export default function NowPlaying({ playVideo, currentVideo, playNext, playNext
     useEffect(() => {
         if (!videoPlayerRef.current || !currentVideo) return;
 
-        const player = YouTubePlayer(videoPlayerRef.current);
+       let player = YouTubePlayer(videoPlayerRef.current);
+
+        // 'loadVideoById' is queued until the player is ready to receive API calls.
         player.loadVideoById(currentVideo.extractedId);
+
+        // 'playVideo' is queue until the player is ready to received API calls and after 'loadVideoById' has been called.
         player.playVideo();
 
         function eventHandler(event: any) {
+            console.log(event);
+            console.log(event.data);
             if (event.data === 0) {
                 playNext(); // auto play next when video ends
             }
@@ -40,7 +39,7 @@ export default function NowPlaying({ playVideo, currentVideo, playNext, playNext
 
         player.on("stateChange", eventHandler);
         return () => { player.destroy(); };
-    }, [currentVideo]);
+    }, [currentVideo, videoPlayerRef]);
 
     return (
         <div className="space-y-4">
@@ -55,13 +54,13 @@ export default function NowPlaying({ playVideo, currentVideo, playNext, playNext
                                 <>
                                     <Image
                                         height={288}
-                                        width={512}
-                                        alt={currentVideo.title_}
+                                        width={288}
+                                        alt={currentVideo.bigImg}
                                         src={currentVideo.bigImg}
                                         className="h-72 w-full rounded object-cover"
                                     />
                                     <p className="mt-2 text-center font-semibold">
-                                        {currentVideo.title_}
+                                        {currentVideo.title}
                                     </p>
                                 </>
                             )}
@@ -73,7 +72,7 @@ export default function NowPlaying({ playVideo, currentVideo, playNext, playNext
             </Card>
             {playVideo && (
                 <Button disabled={playNextLoader} onClick={playNext} className="w-full">
-                    <Play className="mr-2 h-4 w-4" />
+                    <Play className="mr-2 h-4 w-4" />{" "}
                     {playNextLoader ? "Loading..." : "Play Next"}
                 </Button>
             )}

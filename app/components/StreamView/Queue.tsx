@@ -15,10 +15,11 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import {useSocket} from "@/context/socket-context";
 
 type Video = {
     id: string;
-    title_: string;
+    title: string;
     smallImg: string;
     upvotes: { userId: string }[];
     haveUpvoted?: boolean;
@@ -30,53 +31,47 @@ type Props = {
     userId: string;
     isCreator: boolean;
     spaceId: string;
-    onRefresh: () => void;
 };
 
-export default function Queue({ queue, isCreator, userId, spaceId, onRefresh }: Props) {
+export default function Queue({ queue, isCreator, creatorId, userId, spaceId }: Props) {
     const [isEmptyQueueDialogOpen, setIsEmptyQueueDialogOpen] = useState(false);
     const [parent] = useAutoAnimate();
+    const {sendMessage} = useSocket();
 
-    async function handleVote(streamId: string, isUpvote: boolean) {
-        try {
-            await fetch(`/api/${isUpvote ? "upvotes" : "downvotes"}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ streamId }),
-            });
-            onRefresh();
-        } catch (e) {
-            toast.error("Failed to vote");
-        }
+    //Handles the voting part.
+    function handleVote(id: string, isUpvote: boolean) {
+       sendMessage("cast-vote", {
+           vote: isUpvote ? "upvote" : "downvote",
+           streamId: id,
+           userId,
+           creatorId,
+           spaceId
+       })
     }
 
-    async function removeSong(streamId: string) {
-        try {
-            await fetch(`/api/streams?streamId=${streamId}`, { method: "DELETE" });
-            onRefresh();
-        } catch (e) {
-            toast.error("Failed to remove song");
-        }
+   const  removeSong = async(streamId: string)=>  {
+        sendMessage("remove-song", {
+            streamId, userId, spaceId,
+        });
+    };
+
+    const emptyQueue = async () => {
+      sendMessage("empty-queue", {
+          spaceId: spaceId,
+      });
     }
 
-    async function emptyQueue() {
-        try {
-            await fetch(`/api/empty-queue?spaceId=${spaceId}`, { method: "DELETE" });
-            onRefresh();
-        } catch (e) {
-            toast.error("Failed to empty queue");
-        } finally {
-            setIsEmptyQueueDialogOpen(false);
-        }
-    }
-
-    function handleShare() {
-        const link = `${window.location.origin}/spaces/${spaceId}`;
-        navigator.clipboard.writeText(link).then(
-            () => toast.success("Link copied to clipboard!"),
-            () => toast.error("Failed to copy link")
+   const  handleShare = ()=>  {
+        const shareableLink = `${window.location.origin}/spaces/${spaceId}`;
+        navigator.clipboard.writeText(shareableLink).then( () => {
+            () => toast.success("Link copied to clipboard!")
+        },
+            (err) => {
+            console.log("Unable to copy the link!!!", err);
+            toast.error("Failed to copy link, Please try again!!!");
+            }
         );
-    }
+    };
 
     return (
         <>
@@ -89,7 +84,7 @@ export default function Queue({ queue, isCreator, userId, spaceId, onRefresh }: 
                                 <Share2 className="mr-2 h-4 w-4" /> Share
                             </Button>
                             {isCreator && (
-                                <Button onClick={() => setIsEmptyQueueDialogOpen(true)} variant="secondary">
+                                <Button onClick={() => setIsEmptyQueueDialogOpen(true)} >
                                     <Trash2 className="mr-2 h-4 w-4" /> Empty Queue
                                 </Button>
                             )}
@@ -105,67 +100,66 @@ export default function Queue({ queue, isCreator, userId, spaceId, onRefresh }: 
                     )}
 
                     <div className="space-y-4" ref={parent}>
-                        {queue.map((video) => {
-                            const upvoteCount = video.upvotes.length;
-                            const haveUpvoted = video.upvotes.some((u) => u.userId === userId);
-                            return (
-                                <Card key={video.id}>
-                                    <CardContent className="flex items-center space-x-4 p-4">
-                                        <Image
-                                            height={80}
-                                            width={128}
-                                            src={video.smallImg}
-                                            alt={video.title_}
-                                            className="w-32 h-20 rounded object-cover"
-                                        />
-                                        <div className="flex-grow">
-                                            <h3 className="font-semibold">{video.title_}</h3>
-                                            <div className="mt-2 flex items-center space-x-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleVote(video.id, !haveUpvoted)}
-                                                    className="flex items-center space-x-1"
-                                                >
-                                                    {haveUpvoted ? (
-                                                        <ChevronDown className="h-4 w-4" />
-                                                    ) : (
-                                                        <ChevronUp className="h-4 w-4" />
-                                                    )}
-                                                    <span>{upvoteCount}</span>
-                                                </Button>
-                                                {isCreator && (
-                                                    <Button variant="outline" size="sm" onClick={() => removeSong(video.id)}>
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
+                        {queue.map((video) => (
+                            <Card key={video.id} className="">
+                                <CardContent className="flex items-center space-x-4 p-4">
+                                    <Image height={80} width={128} src={video.smallImg} alt={`Thumbnail for ${video.title}`}
+                                    className="w-32 h-20 rounded object-cover" />
+                                    <div className="flex-grow">
+                                     <h3 className="font-semibold">{video.title}</h3>
+                                    <div className="mt-2 flex items-center space-x-2">
+                                        <Button
+                                             variant="outline"
+                                             size="sm"
+                                             onClick={() => handleVote(video.id, video.haveUpvoted?false: true)}
+                                             className="flex items-center space-x-1">
+                                            {video.haveUpvoted? (
+                                                <ChevronDown className="h-4 w-4"/>
+                                            ) : (
+                                                <ChevronUp className="h-4 w-4"/>
+                                            )}
+                                            <span>{video.upvotes.length}</span>
+                                        </Button>
+                                        {isCreator && (
+                                            <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => removeSong(video.id)}>
+                                                <X className="h-4 w-4"/>
+                                            </Button>
+                                            )}
+                                    </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            ))}
+                            </div>
                     </div>
                 </div>
-            </div>
-
-            <Dialog open={isEmptyQueueDialogOpen} onOpenChange={setIsEmptyQueueDialogOpen}>
+            <Dialog
+                open={isEmptyQueueDialogOpen}
+                onOpenChange={setIsEmptyQueueDialogOpen}
+                        >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Empty Queue</DialogTitle>
+                        <DialogTitle>Empty Queue.</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to empty the queue? This cannot be undone.
+                            Are you sure you want to empty the queue? This will remove all
+                            songs from the queue. This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEmptyQueueDialogOpen(false)}>
+                        <Button
+                        variant="outline"
+                        onClick={() => setIsEmptyQueueDialogOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={emptyQueue} variant="destructive">
+                        <Button
+                        onClick={emptyQueue} variant="destructive">
                             Empty Queue
                         </Button>
                     </DialogFooter>
-                </DialogContent>
+            </DialogContent>
             </Dialog>
         </>
     );

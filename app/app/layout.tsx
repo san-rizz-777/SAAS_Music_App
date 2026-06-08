@@ -13,7 +13,7 @@ const toastOptions: ToasterProps = {
   theme: "dark",
   richColors: true,
   closeButton: true,
-  pauseWhenPageIsHidden: true,
+ // pauseWhenPageIsHidden: true,
 };
 
 export const metadata: Metadata = {

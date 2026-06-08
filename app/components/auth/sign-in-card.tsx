@@ -38,6 +38,7 @@ export default function SigninCard({ setFormType: setState }: SigninCardProps) {
                     if (!res?.error) {
                         router.push("/");
                     }
+                    console.log(res);
                     setPending(false);
                 });
             }
