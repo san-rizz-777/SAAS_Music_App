@@ -4,7 +4,7 @@ import prisma from "@/lib/db"
 import {getServerSession} from "next-auth";
 
 
-export default async function POST(req:NextRequest){
+export async function POST(req:NextRequest){
     //instantiate the session
     const session = await getServerSession(authOptions)
 
