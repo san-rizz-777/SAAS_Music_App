@@ -22,7 +22,6 @@ const redisCredentials = {
     url: `redis://${connection.username}:${connection.password}@${connection.host}:${connection.port}`,
 };
 
-///Major class to apply user actions
 export class RoomManager {
     private static instance: RoomManager;
     public spaces: Map<string, Space>;
@@ -116,7 +115,6 @@ export class RoomManager {
         }
     }
 
-    ///creates a room[space] by a creator
     async createRoom(spaceId: string) {
         console.log(process.pid + ": createRoom: ", { spaceId });
         if (!this.spaces.has(spaceId)) {
@@ -124,12 +122,24 @@ export class RoomManager {
                 users: new Map<string, User>(),
                 creatorId: "",
             });
-
+            // const roomsString = await this.redisClient.get("rooms");
+            // if (roomsString) {
+            //   const rooms = JSON.parse(roomsString);
+            //   if (!rooms.includes(creatorId)) {
+            //     await this.redisClient.set(
+            //       "rooms",
+            //       JSON.stringify([...rooms, creatorId])
+            //     , {
+            //       EX: 3600 * 24
+            //     });
+            //   }
+            // } else {
+            //   await this.redisClient.set("rooms", JSON.stringify([creatorId]));
+            // }
             await this.subscriber.subscribe(spaceId, this.onSubscribeRoom);
         }
     }
 
-    ///get the users inside the room
     async addUser(userId: string, ws: WebSocket, token: string) {
         let user = this.users.get(userId);
         if (!user) {
@@ -145,7 +155,6 @@ export class RoomManager {
         }
     }
 
-    ///main function to join the user in a room
     async joinRoom(
         spaceId: string,
         creatorId: string,
@@ -158,13 +167,11 @@ export class RoomManager {
         let space = this.spaces.get(spaceId);
         let user = this.users.get(userId);
 
-        //if space not present creates one
         if (!space) {
             await this.createRoom(spaceId);
             space = this.spaces.get(spaceId);
         }
 
-        //adds the user if not present
         if (!user) {
             await this.addUser(userId, ws, token);
             user = this.users.get(userId);
@@ -174,7 +181,6 @@ export class RoomManager {
             }
         }
 
-        //setting websocket to specific space
         this.wstoSpace.set(ws, spaceId);
 
         if (space && user) {
@@ -187,7 +193,6 @@ export class RoomManager {
         }
     }
 
-    ///for each user and for their each websocket send the empty queue message
     publishEmptyQueue(spaceId: string) {
         const space = this.spaces.get(spaceId);
         space?.users.forEach((user, userId) => {
@@ -201,7 +206,6 @@ export class RoomManager {
         });
     }
 
-    ///update in the db about the empty of queue
     async adminEmptyQueue(spaceId: string) {
         const room = this.spaces.get(spaceId);
         const userId = this.spaces.get(spaceId)?.creatorId;
@@ -213,7 +217,7 @@ export class RoomManager {
                     played: false,
                     spaceId: spaceId,
                 },
-                data: {// @ts-ignore
+                data: {
                     played: true,
                     playedTs: new Date(),
                 },
@@ -235,7 +239,7 @@ export class RoomManager {
                 ws.send(
                     JSON.stringify({
                         type: `remove-song/${spaceId}`,
-                        data: {// @ts-ignore
+                        data: {
                             streamId,
                             spaceId,
                         },
@@ -262,7 +266,7 @@ export class RoomManager {
                 spaceId,
                 JSON.stringify({
                     type: "remove-song",
-                    data: {// @ts-ignore
+                    data: {
                         streamId,
                         spaceId,
                     },
@@ -273,7 +277,7 @@ export class RoomManager {
                 ws.send(
                     JSON.stringify({
                         type: "error",
-                        data: {// @ts-ignore
+                        data: {
                             message: "You cant remove the song . You are not the host",
                         },
                     })
@@ -325,14 +329,14 @@ export class RoomManager {
                 a.width < b.width ? -1 : 1
             );
             const stream = await this.prisma.stream.create({
-                data: {// @ts-ignore
+                data: {
                     id: crypto.randomUUID(),
                     userId: creatorId,
                     url: url,
                     extractedId,
                     type: "Youtube",
                     addedBy: userId,
-                    title_: res.title ?? "Cant find video",
+                    title: res.title ?? "Cant find video",
                     // smallImg: video.thumbnails.medium.url,
                     // bigImg: video.thumbnails.high.url,
                     smallImg:
@@ -344,7 +348,7 @@ export class RoomManager {
                         thumbnails[thumbnails.length - 1].url ??
                         "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
                     spaceId: spaceId,
-                } as any
+                },
             });
             // update currentStream
             await Promise.all([
@@ -368,7 +372,7 @@ export class RoomManager {
                     where: {
                         id: stream.id,
                     },
-                    data: {// @ts-ignore
+                    data: {
                         played: true,
                         playedTs: new Date(),
                     },
@@ -396,7 +400,7 @@ export class RoomManager {
                 ws.send(
                     JSON.stringify({
                         type: "error",
-                        data: {// @ts-ignore
+                        data: {
                             message: "You can't perform this action.",
                         },
                     })
@@ -422,7 +426,7 @@ export class RoomManager {
                 ws.send(
                     JSON.stringify({
                         type: "error",
-                        data: {// @ts-ignore
+                        data: {
                             message: "Please add video in queue",
                         },
                     })
@@ -451,7 +455,7 @@ export class RoomManager {
                 where: {
                     id: mostUpvotedStream.id,
                 },
-                data: {// @ts-ignore
+                data: {
                     played: true,
                     playedTs: new Date(),
                 },
@@ -490,7 +494,7 @@ export class RoomManager {
                 ws.send(
                     JSON.stringify({
                         type: `new-vote/${spaceId}`,
-                        data: {// @ts-ignore
+                        data: {
                             vote,
                             streamId,
                             votedBy,
@@ -512,7 +516,7 @@ export class RoomManager {
         console.log(process.pid + " adminCastVote");
         if (vote === "upvote") {
             await this.prisma.upvote.create({
-                data: {// @ts-ignore
+                data: {
                     id: crypto.randomUUID(),
                     userId,
                     streamId,
@@ -570,7 +574,7 @@ export class RoomManager {
                     ws.send(
                         JSON.stringify({
                             type: "error",
-                            data: {// @ts-ignore
+                            data: {
                                 message: "You can vote after 20 mins",
                             },
                         })
@@ -623,8 +627,10 @@ export class RoomManager {
             return;
         }
 
+        console.log(room);
+        console.log("Current user:- ", currentUser);
         const extractedId = getVideoId(url);
-
+console.log(extractedId);
         if (!extractedId) {
             currentUser?.ws.forEach((ws) => {
                 ws.send(
@@ -642,6 +648,8 @@ export class RoomManager {
             existingActiveStream + 1
         );
 
+        console.log("Redis Clent set done.")
+
         const res = await youtubesearchapi.GetVideoDetails(extractedId);
 
         if (res.thumbnail) {
@@ -650,14 +658,14 @@ export class RoomManager {
                 a.width < b.width ? -1 : 1
             );
             const stream = await this.prisma.stream.create({
-                data: {// @ts-ignore
+                data: {
                     id: crypto.randomUUID(),
                     userId: userId,
                     url: url,
                     extractedId,
                     type: "Youtube",
                     addedBy: userId,
-                    title_: res.title ?? "Cant find video",
+                    title: res.title ?? "Cant find video",
                     // smallImg: video.thumbnails.medium.url,
                     // bigImg: video.thumbnails.high.url,
                     smallImg:
@@ -669,13 +677,13 @@ export class RoomManager {
                         thumbnails[thumbnails.length - 1].url ??
                         "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
                     spaceId: spaceId,
-                } as any
+                },
             });
-
+console.log("Stream created!!!")
             await this.redisClient.set(`${spaceId}-${url}`, new Date().getTime(), {
                 EX: TIME_SPAN_FOR_REPEAT / 1000,
             });
-
+console.log("After stream redis!!!")
             await this.redisClient.set(
                 `lastAdded-${spaceId}-${userId}`,
                 new Date().getTime(),
@@ -683,12 +691,12 @@ export class RoomManager {
                     EX: TIME_SPAN_FOR_QUEUE / 1000,
                 }
             );
-
+console.log("Before publish.")
             await this.publisher.publish(
                 spaceId,
                 JSON.stringify({
                     type: "new-stream",
-                    data: {// @ts-ignore
+                    data: {
                         ...stream,
                         hasUpvoted: false,
                         upvotes: 0,
@@ -700,7 +708,7 @@ export class RoomManager {
                 ws.send(
                     JSON.stringify({
                         type: "error",
-                        data: {// @ts-ignore
+                        data: {
                             message: "Video not found",
                         },
                     })
@@ -755,11 +763,12 @@ export class RoomManager {
             );
 
             if (lastAdded) {
+                console.log("Last added error....")
                 currentUser.ws.forEach((ws) => {
                     ws.send(
                         JSON.stringify({
                             type: "error",
-                            data: {// @ts-ignore
+                            data: {
                                 message: "You can add again after 20 min.",
                             },
                         })
@@ -770,11 +779,12 @@ export class RoomManager {
             let alreadyAdded = await this.redisClient.get(`${spaceId}-${url}`);
 
             if (alreadyAdded) {
+                console.log("Last added error....")
                 currentUser.ws.forEach((ws) => {
                     ws.send(
                         JSON.stringify({
                             type: "error",
-                            data: {// @ts-ignore
+                            data: {
                                 message: "This song is blocked for 1 hour",
                             },
                         })
@@ -788,7 +798,7 @@ export class RoomManager {
                     ws.send(
                         JSON.stringify({
                             type: "error",
-                            data: {// @ts-ignore
+                            data: {
                                 message: "Queue limit reached",
                             },
                         })
