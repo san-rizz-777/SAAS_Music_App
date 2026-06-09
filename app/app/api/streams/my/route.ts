@@ -5,7 +5,7 @@ import {authOptions} from "@/lib/next-options"
 
 
 ///Here we are creating a get endpoint to give the user all the info about streams and upvotes
-export default async function GET(req: NextRequest){
+export  async function GET(req: NextRequest){
 
     const session = await getServerSession(authOptions);
 
@@ -45,7 +45,7 @@ export default async function GET(req: NextRequest){
         streams: streams.map(({_count, ...rest}) => ({
                 ...rest,
             upvotes: _count.upvotes,
-            haveUpvotes: !!rest.upvotes.length    ///Just checks if empty then return false
+            haveUpvoted: !!rest.upvotes.length    ///Just checks if empty then return false
         }))
     });
 }

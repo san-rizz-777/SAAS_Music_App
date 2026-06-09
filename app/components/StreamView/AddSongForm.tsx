@@ -49,7 +49,7 @@ export default function AddSongForm({
             setLoading(true);
 
             // sending back to socket
-            sendMessage("add to queue", {
+            sendMessage("add-to-queue", {
                 spaceId, userId, url: inputLink,
             });
         }

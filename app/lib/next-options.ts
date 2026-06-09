@@ -126,7 +126,7 @@
                    // console.log("Found user:", user?.id);
                   if(user) {
                         session.user.id = user.id;
-                        console.log("session.user after setting:", JSON.stringify(session.user))
+                        //console.log("session.user after setting:", JSON.stringify(session.user))
                       }
                 } catch (error){
                     if(error instanceof  PrismaClientInitializationError)

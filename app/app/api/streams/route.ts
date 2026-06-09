@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json(
                     {
                         message:
-                            "Rate limit exceeded: You can only add 5 songs per 2 minutes",
+                            "Rate limit exceeded: You can only add 6 songs per 2 minutes",
                     },
                     {
                         status: 429,

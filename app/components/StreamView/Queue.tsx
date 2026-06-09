@@ -17,14 +17,6 @@ import {
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {useSocket} from "@/context/socket-context";
 
-type Video = {
-    id: string;
-    title: string;
-    smallImg: string;
-    upvotes: { userId: string }[];
-    haveUpvoted?: boolean;
-};
-
 type Props = {
     queue: Video[];
     creatorId: string;
@@ -118,7 +110,7 @@ export default function Queue({ queue, isCreator, creatorId, userId, spaceId }: 
                                             ) : (
                                                 <ChevronUp className="h-4 w-4"/>
                                             )}
-                                            <span>{video.upvotes.length}</span>
+                                            <span>{video.upvotes}</span>
                                         </Button>
                                         {isCreator && (
                                             <Button

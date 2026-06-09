@@ -1,7 +1,9 @@
 import {z} from "zod";
 
 //email validation schema
-export const emailSchema = z.email({message:"Email is invalid!!!"});
+export const emailSchema = z
+    .string({ message: "Email is required" })
+    .email({ message: "Invalid email" });
 
 //password validation
 export const passSchema = z.string({message:"Password is required!"})

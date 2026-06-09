@@ -6,9 +6,9 @@ import StreamView from "@/components/StreamView";
 import ErrorScreen from "@/components/ErrorScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 
-export default function Component({params}: {params: Promise<{spaceId: string}>}) {
+export default function Component({params}: {params: {spaceId: string}}) {
 
-    const { spaceId } = use(params);
+    const spaceId = params.spaceId;
     const { socket, user, loading, setUser, connectionError } = useSocket();
     const [creatorId, setCreatorId] = useState<string | null>(null);
     const [loading1, setLoading1] = useState(true);
@@ -35,30 +35,34 @@ export default function Component({params}: {params: Promise<{spaceId: string}>}
 
     useEffect(() => {
         if (user && socket && creatorId) {
-            const token = user.token || jwt.sign(
-                {
-                    creatorId: creatorId,
-                    userId: user?.id,
-                },
-                process.env.NEXT_PUBLIC_SECRET || "",
-                {
-                    expiresIn: "24h",
-                }
-            );
+
+                let token = user?.token || jwt.sign(
+                    {
+                        creatorId: creatorId,
+                        userId: user?.id,
+                    },
+                    process.env.NEXT_PUBLIC_SECRET || "",
+                    {
+                        expiresIn: "24h",
+                    }
+                );
 
             socket?.send(
-                JSON.stringify({
-                    type: "join-room",
-                    data: {
-                        token,
-                        spaceId
-                    },
-                })
-            );
+                    JSON.stringify({
+                        type: "join-room",
+                        data: {
+                            token,
+                            spaceId
+                        },
+                    })
+                );
 
-            if (!user.token) {
-                setUser({ ...user, token });
-            }
+                if (user?.token) {
+                    setUser({...user, token});
+                }
+
+
+            //connectToRoom();
         }
     }, [user, spaceId, creatorId, socket]);
 

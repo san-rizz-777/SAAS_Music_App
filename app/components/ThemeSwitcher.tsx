@@ -26,7 +26,7 @@ export function ThemeSwitcher() {
             onClick={toggleTheme}
             variant="ghost"
         >
-            {isDark ? <Sun /> : <Moon />}
+            {isDark === "dark" ? <Sun /> : <Moon />}
         </Button>
     );
 }
