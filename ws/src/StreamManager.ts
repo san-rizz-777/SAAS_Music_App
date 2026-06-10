@@ -653,13 +653,17 @@ console.log(extractedId);
 
         console.log("Redis Clent set done.")
 
-        const res = await youtubesearchapi.GetVideoDetails(extractedId);
-
-        if (res.thumbnail) {
+        //const res = await youtubesearchapi.GetVideoDetails(extractedId);
+        const res = await fetch(
+            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${extractedId}&format=json`
+        );
+        const data = await res.json();
+        if (data) {
+            /*
             const thumbnails = res.thumbnail.thumbnails;
             thumbnails.sort((a: { width: number }, b: { width: number }) =>
                 a.width < b.width ? -1 : 1
-            );
+            );*/
             const stream = await this.prisma.stream.create({
                 data: {
                     id: crypto.randomUUID(),
@@ -668,16 +672,14 @@ console.log(extractedId);
                     extractedId,
                     type: "Youtube",
                     addedBy: userId,
-                    title: res.title ?? "Cant find video",
+                    title: data.title ?? "Cant find video",
                     // smallImg: video.thumbnails.medium.url,
                     // bigImg: video.thumbnails.high.url,
                     smallImg:
-                        (thumbnails.length > 1
-                            ? thumbnails[thumbnails.length - 2].url
-                            : thumbnails[thumbnails.length - 1].url) ??
+                        data.thumbnail_url  ??
                         "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
                     bigImg:
-                        thumbnails[thumbnails.length - 1].url ??
+                        data.thumbnail_url  ??
                         "https://cdn.pixabay.com/photo/2024/02/28/07/42/european-shorthair-8601492_640.jpg",
                     spaceId: spaceId,
                 },
