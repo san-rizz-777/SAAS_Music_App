@@ -16,10 +16,11 @@ const connection = {
     password: process.env.REDIS_PASSWORD || "",
     host: process.env.REDIS_HOST || "",
     port: parseInt(process.env.REDIS_PORT || "") || 6379,
+    tls:true,
 };
 
 const redisCredentials = {
-    url: `redis://${connection.username}:${connection.password}@${connection.host}:${connection.port}`,
+    url: `rediss://${connection.username}:${connection.password}@${connection.host}:${connection.port}`,
 };
 
 export class RoomManager {
