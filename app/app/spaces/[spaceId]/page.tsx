@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import {useSocket} from "@/context/socket-context";
 import StreamView from "@/components/StreamView";
-import StreamView2 from "@/components/StreamView2";
 import LoadingScreen from "@/components/LoadingScreen";
 import ErrorScreen from "@/components/ErrorScreen";
 import jwt from "jsonwebtoken";
