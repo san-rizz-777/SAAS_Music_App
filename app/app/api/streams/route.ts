@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/db";
+//@ts-ignore
 import youtubesearchapi from "youtube-search-api";
 import { getServerSession } from "next-auth";
 import {authOptions} from "@/lib/next-options";
