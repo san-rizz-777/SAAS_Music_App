@@ -16,7 +16,7 @@ const connection = {
     password: process.env.REDIS_PASSWORD || "",
     host: process.env.REDIS_HOST || "",
     port: parseInt(process.env.REDIS_PORT || "") || 6379,
-    tls: {} as any,
+   tls: {} as any,
 };
 
 const redisCredentials = {
@@ -137,7 +137,9 @@ export class RoomManager {
             // } else {
             //   await this.redisClient.set("rooms", JSON.stringify([creatorId]));
             // }
-            await this.subscriber.subscribe(spaceId, this.onSubscribeRoom);
+            await this.subscriber.subscribe(spaceId, (message, channel) => {
+                this.onSubscribeRoom(message, channel);  //  arrow function preserves 'this'
+            });
         }
     }
 
