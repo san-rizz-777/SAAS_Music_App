@@ -19,7 +19,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "jsonwebtoken": "^8.5.1",
-    "prisma": "^5.19.1",
+    "prisma": "5.19.1",
     "redis": "^4.7.0",
     "ws": "^8.18.0",
     "youtube-search-api": "^1.2.2"
