@@ -72,16 +72,16 @@ export default function SpacePage({ params: { spaceId } }: { params: { spaceId: 
       return <ErrorScreen>Cannot connect to server!!!</ErrorScreen>
   }
 
-  if(loading){
-      return <LoadingScreen />;
-  }
-
   if(!user){
       window.alert("Please log in to view this space!");
       router.push("/");
       return null;
       //return <ErrorScreen>Please log in.....</ErrorScreen>;
   }
+
+    if(loading){
+        return <LoadingScreen />;
+    }
 
     if (loading || loading1) return <LoadingScreen />;
 
