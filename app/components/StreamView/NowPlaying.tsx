@@ -15,8 +15,10 @@ type Props = {
     playNext: () => void;
 };
 
+
 export default function NowPlaying({ playVideo, currentVideo, playNext, playNextLoader }: Props) {
     const videoPlayerRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         if (!videoPlayerRef.current || !currentVideo) return;
@@ -41,6 +43,10 @@ export default function NowPlaying({ playVideo, currentVideo, playNext, playNext
         return () => { player.destroy(); };
     }, [currentVideo, videoPlayerRef]);
 
+
+    ///for spectator
+   let flag: boolean = true;
+
     return (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold">Now Playing</h2>
@@ -48,7 +54,7 @@ export default function NowPlaying({ playVideo, currentVideo, playNext, playNext
                 <CardContent className="p-4">
                     {currentVideo ? (
                         <div>
-                            {playVideo ? (
+                            {flag? (
                                 <div ref={videoPlayerRef} className="w-full" />
                             ) : (
                                 <>
