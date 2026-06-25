@@ -132,17 +132,18 @@ export async function GET(req:NextRequest){
                 select:{hostId:true}
             });
 
-        if(!session?.user?.id)
-        {
-            return NextResponse.json({success: false, message: "You must be logged in to get a Space information!!!",}, {status:401});
-        }
-
             //if not found
             if (!space) {
                 return NextResponse.json({success:false, message:"Space does not exist!!!"}, {status:404})
             }
 
             return NextResponse.json({success:true, message:"Host Id retrieve successfully!!!!", hostId:space.hostId, space}, {status:200});
+        }
+
+
+        if(!session?.user?.id)
+        {
+            return NextResponse.json({success: false, message: "You must be logged in to get a Space information!!!",}, {status:401});
         }
 
         //if no space Id is provided
