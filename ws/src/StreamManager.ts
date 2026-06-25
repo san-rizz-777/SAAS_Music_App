@@ -16,10 +16,10 @@ const connection = {
     password: process.env.REDIS_PASSWORD || "",
     host: process.env.REDIS_HOST || "",
     port: parseInt(process.env.REDIS_PORT || "") || 6379,
-   tls: {} as any,
+   tls: {} as any,     //comment this only in development!!!!
 };
 
-const redisCredentials = {
+const redisCredentials = { ///major problem here -> use "rediss" in production but in development use "redis"
     url: `rediss://${connection.username}:${connection.password}@${connection.host}:${connection.port}`,
 };
 

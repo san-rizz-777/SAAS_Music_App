@@ -67,6 +67,7 @@ export default function StreamView({
                     addToQueue(data);
                 }
                 else if(type === `new-vote/${spaceId}`){
+                    console.log("vote data:", data);
                     setQueue((prev) => {
                         return prev
                             .map((v) => {
@@ -74,7 +75,7 @@ export default function StreamView({
                                 {
                                     return {
                                         ...v,
-                                        upvotes: data.upvotes + (data.vote === "upvote"? 1 : -1),
+                                        upvotes: data.vote === "upvote" ? v.upvotes + 1 : v.upvotes - 1,
                                         haveUpvoted:
                                         data.votedBy === user?.id? data.vote === "upvote" : v.haveUpvoted,
                                     };
