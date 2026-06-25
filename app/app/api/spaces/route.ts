@@ -147,7 +147,7 @@ export async function GET(req:NextRequest){
 
         //if no space Id is provided
         const spaces = await prisma.space.findMany({
-            where:{hostId:session.user.id}
+            where:{hostId:session?.user.id}
         })
 
         return NextResponse.json({success:true, message:"Successfully retrieved all the spaces!!!!", spaces}, {status:200});
