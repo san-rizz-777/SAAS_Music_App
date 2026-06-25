@@ -125,17 +125,17 @@ export async function GET(req:NextRequest){
         const session = await getServerSession(authOptions);
         const spaceId = req.nextUrl.searchParams.get("spaceId");
 
-        if(!session?.user?.id)
-        {
-            return NextResponse.json({success: false, message: "You must be logged in to get a Space information!!!",}, {status:401});
-        }
-
         //if spaceId is provided
         if (spaceId) {
             const space = await prisma.space.findUnique({
                 where:{id: spaceId},
                 select:{hostId:true}
             });
+
+        if(!session?.user?.id)
+        {
+            return NextResponse.json({success: false, message: "You must be logged in to get a Space information!!!",}, {status:401});
+        }
 
             //if not found
             if (!space) {
