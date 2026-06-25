@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { use } from "react";
 import {useSocket} from "@/context/socket-context";
 import StreamView from "@/components/StreamView";
 import LoadingScreen from "@/components/LoadingScreen";
 import ErrorScreen from "@/components/ErrorScreen";
 import jwt from "jsonwebtoken";
 
-export default function SpacePage({ params }: { params: Promise<{ spaceId: string }> }) {
-    const { spaceId } = use(params);
+export default function SpacePage({ params: { spaceId } }: { params: { spaceId: string } }) {
+    //const  spaceId  = params;
 
     const router = useRouter();
     const [creatorId, setCreatorId] = useState<string>();
