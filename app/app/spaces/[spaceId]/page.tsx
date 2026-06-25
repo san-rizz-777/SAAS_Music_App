@@ -53,7 +53,7 @@ export default function SpacePage({ params }: { params: Promise<{ spaceId: strin
 
             socket?.send(
                 JSON.stringify({
-                    type: "join room",
+                    type: "join-room",
                     data:{
                         token , spaceId
                     },
@@ -79,9 +79,13 @@ export default function SpacePage({ params }: { params: Promise<{ spaceId: strin
       return <ErrorScreen>Please log in.....</ErrorScreen>;
   }
 
+    if (loading || loading1) return <LoadingScreen />;
+
+
   ///if the creator id is user id it pushes it to dashboard
     if(creatorId===user.id){
         router.push(`/dashboard/${spaceId}`)
+        return null;  //prevents rendering streamview
     }
 
     return <StreamView creatorId={creatorId as string} playVideo={false} spaceId={spaceId} />;

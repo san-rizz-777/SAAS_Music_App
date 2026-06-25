@@ -54,7 +54,7 @@ export default function Queue({ queue, isCreator, creatorId, userId, spaceId }: 
     }
 
    const  handleShare = ()=>  {
-        const shareableLink = `${window.location.origin}/dashboard/${spaceId}`;
+        const shareableLink = `${window.location.origin}/spaces/${spaceId}`;
         navigator.clipboard.writeText(shareableLink).then( () => {
             toast.success("Link copied to clipboard!")
         },
