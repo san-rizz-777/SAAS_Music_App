@@ -29,6 +29,8 @@ export default function SpacePage({ params: { spaceId } }: { params: { spaceId: 
                 setCreatorId(data.hostId);
             } catch (e: any) {
                  console.log(e);
+                window.alert(e.message || "Space not found. Please check the link.");
+                router.push("/");  // redirect home after alert
             } finally {
                 setLoading1(false);
             }
@@ -75,7 +77,10 @@ export default function SpacePage({ params: { spaceId } }: { params: { spaceId: 
   }
 
   if(!user){
-      return <ErrorScreen>Please log in.....</ErrorScreen>;
+      window.alert("Please log in to view this space!");
+      router.push("/");
+      return null;
+      //return <ErrorScreen>Please log in.....</ErrorScreen>;
   }
 
     if (loading || loading1) return <LoadingScreen />;
