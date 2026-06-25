@@ -30,7 +30,7 @@ importers:
         specifier: ^8.5.1
         version: 8.5.1
       prisma:
-        specifier: ^5.19.1
+        specifier: 5.19.1
         version: 5.19.1
       redis:
         specifier: ^4.7.0
@@ -532,6 +532,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:

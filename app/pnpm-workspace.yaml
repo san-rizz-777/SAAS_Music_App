@@ -1,0 +1,12 @@
+allowBuilds:
+  '@prisma/client': false
+  '@prisma/engines': false
+  bigint-buffer: false
+  blake-hash: false
+  bufferutil: false
+  keccak: false
+  prisma: false
+  protobufjs: false
+  tiny-secp256k1: false
+  usb: false
+  utf-8-validate: false
